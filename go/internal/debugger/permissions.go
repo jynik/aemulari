@@ -18,9 +18,9 @@ func (p *Permissions) Set(s string) error {
 		return fmt.Errorf("Invalid permissions string: %s", s)
 	}
 
-	p.Read = strings.Index(s, "r") != -1
-	p.Write = strings.Index(s, "w") != -1
-	p.Exec = strings.Index(s, "x") != -1
+	p.Read = strings.Contains(s, "r")
+	p.Write = strings.Contains(s, "w")
+	p.Exec = strings.Contains(s, "x")
 
 	return nil
 }
