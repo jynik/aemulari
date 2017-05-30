@@ -120,14 +120,14 @@ var arm_r9 RegisterDef = RegisterDef{
 	name: "r9",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
-	uc:   uc.ARM_REG_R8,
+	uc:   uc.ARM_REG_R9,
 }
 
 var arm_r10 RegisterDef = RegisterDef{
 	name: "r10",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
-	uc:   uc.ARM_REG_R9,
+	uc:   uc.ARM_REG_R10,
 }
 
 var arm_r11 RegisterDef = RegisterDef{
