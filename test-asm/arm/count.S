@@ -40,6 +40,7 @@ loop_j:
     blt     loop_j
 
     // Outer loop increment and test
+    add     r0, #1
     cmp     r0, #127
     blt     loop_i
 
