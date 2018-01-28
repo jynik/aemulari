@@ -82,9 +82,14 @@ func (d *Debugger) Reset() error {
 	d.mu.Close()
 	d.cs.Close()
 
-	// Keeped mapped memory state
+	/* Reset to original configuration, but keep memory mapppings
+	 * This is intended to allow us to map regions as we discover they're
+	 * neccessary, and not have to re-do that with each reset.
+	 *
+	 * TODO: Make this an opt-out configuration item?
+	 */
 	newConfig := d.cfg
-	newConfig.Mem = d.cfg.Mem
+	newConfig.Mem = d.mapped
 
 	return d.init(newConfig, true)
 }
