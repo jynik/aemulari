@@ -1,13 +1,21 @@
 GO ?= go
+
 DEPS := .deps/unicorn .deps/gapstone .deps/gocui .deps/gologging
+
+SRC  := $(wildcard internal/arch/*.go) \
+		$(wildcard internal/cmdline/*.go) \
+		$(wildcard internal/debugger/*.go) \
+		$(wildcard internal/log/*.go) \
+		$(wildcard internal/ui/*.go) \
+
 
 all: aemulari aemulari-gui
 
-aemulari: $(DEPS)
-	$(GO) build ./cmd/aemulari/aemulari.go
+aemulari: ./cmd/aemulari/aemulari.go $(SRC) $(DEPS)
+	$(GO) build $<
 
-aemulari-gui: $(DEPS)
-	$(GO) build ./cmd/aemulari-gui/aemulari-gui.go
+aemulari-gui: ./cmd/aemulari-gui/aemulari-gui.go $(SRC) $(DEPS)
+	$(GO) build $<
 
 .deps:
 	@mkdir -p .deps
