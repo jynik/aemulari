@@ -1,15 +1,12 @@
 package arch
 
+const VARIABLE_INSTR_LEN = 0
+
 type ArchBase struct {
 	archType    Type
+	archMode	Mode
 	maxInstrLen uint
-	defaults    Defaults
-
 	RegisterMap
-}
-
-func (b *ArchBase) Defaults() Defaults {
-	return b.defaults
 }
 
 func (b *ArchBase) Type() Type {

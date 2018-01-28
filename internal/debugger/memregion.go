@@ -47,6 +47,10 @@ func (r MemRegion) String() string {
 	return ret
 }
 
+func MemRegionUsage() string {
+	return "<name>:<addr>:<size>[:input file[:output file]]"
+}
+
 func (r MemRegion) LoadInputData() ([]byte, error) {
 	return ioutil.ReadFile(r.inputFile)
 }

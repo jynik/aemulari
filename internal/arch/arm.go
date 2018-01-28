@@ -282,11 +282,7 @@ func armConstructor() Arch {
 	arm := &Arm{
 		ArchBase{
 			archType: Type{uc.ARCH_ARM, cs.CS_ARCH_ARM},
-			defaults: Defaults{
-				Mode:     Mode{uc.MODE_ARM, cs.CS_MODE_ARM},
-				CodeBase: 0x1000,
-				CodeSize: 0x1000000,
-			},
+			archMode: Mode{uc.MODE_ARM, cs.CS_MODE_ARM},
 			maxInstrLen: 4,
 		},
 	}
@@ -325,6 +321,24 @@ func (a *Arm) Endianness(rvs []RegisterValue) Endianness {
 	}
 
 	panic("armEndianness() was not passed CPSR.")
+}
+
+func (a *Arm) Mode(rvs []RegisterValue) Mode {
+	for _, rv := range rvs {
+		if rv.Reg.name == "cpsr" {
+			/* Test CPSR Thumb bit.
+			 * FIXME Technically we should test the Jazelle bit set, but meh - will add it as-needed */
+			if (rv.Value & (1 << 9)) != 0 {
+				return Mode{uc.MODE_THUMB, cs.CS_MODE_THUMB}
+			}
+
+			return Mode{uc.MODE_ARM, cs.CS_MODE_ARM}
+		}
+		fmt.Printf("%s\n", rv.Reg.name)
+	}
+
+	// FIXME Default to ARM for now
+	return Mode{uc.MODE_ARM, cs.CS_MODE_ARM}
 }
 
 func (a *Arm) Exception(intno uint32, regs []RegisterValue, instr []byte) (ex Exception) {

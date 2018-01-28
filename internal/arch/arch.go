@@ -13,12 +13,6 @@ const (
 	LittleEndian
 )
 
-type Defaults struct {
-	Mode     Mode
-	CodeBase uint64
-	CodeSize uint64
-}
-
 type Type struct {
 	Uc int
 	Cs int
@@ -46,11 +40,11 @@ func (e *Exception) Occurred() bool {
 type archConstructor func() Arch
 
 type Arch interface {
-	/* Return per-Architecture defaults */
-	Defaults() Defaults
-
-	/* Return the Architecture type */
+	// Return the processor's architecture type
 	Type() Type
+
+	// Return the current processor mode
+	Mode(regs []RegisterValue) Mode
 
 	/* Return the max size of an instruction, in bytes */
 	MaxInstrLen() uint

@@ -70,9 +70,8 @@ var log = logging.MustGetLogger("")
 // Instantiate and configure a new Debugger
 func New(c Config) (*Debugger, error) {
 	var d Debugger
-	d.cfg = c
 
-	if err := d.init(d.cfg.Mem, false); err != nil {
+	if err := d.init(c, false); err != nil {
 		return nil, err
 	}
 
@@ -82,19 +81,25 @@ func New(c Config) (*Debugger, error) {
 func (d *Debugger) Reset() error {
 	d.mu.Close()
 	d.cs.Close()
-	return d.init(d.mapped, true)
+
+	// Keeped mapped memory state
+	newConfig := d.cfg
+	newConfig.Mem = d.cfg.Mem
+
+	return d.init(newConfig, true)
 }
 
-func (d *Debugger) init(toMap MemRegions, reset bool) error {
+func (d *Debugger) init(cfg Config, reset bool) error {
 	var err error
+
+	d.cfg = cfg
+	archType := d.cfg.Arch.Type()
+	archMode := d.cfg.Arch.Mode(d.cfg.RegDefs)
 
 	// Keep existing breakpoints if we're resetting the debugger
 	if !reset {
 		d.bps.Initialize()
 	}
-
-	archType := d.cfg.Arch.Type()
-	archMode := d.cfg.Arch.Defaults().Mode
 
 	d.mu, err = uc.NewUnicorn(archType.Uc, archMode.Uc)
 	if err != nil {
@@ -112,7 +117,7 @@ func (d *Debugger) init(toMap MemRegions, reset bool) error {
 
 	// Load memory regions
 	d.mapped = make(MemRegions)
-	for _, m := range toMap {
+	for _, m := range d.cfg.Mem {
 		if err = d.Map(m); err != nil {
 			log.Debugf("Failed to map %s", m)
 			return d.closeAll(err)

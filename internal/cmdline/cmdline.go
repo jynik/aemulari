@@ -16,7 +16,6 @@ type cmdlineArgs struct {
 
 	// Raw arguments
 	arch     string // Target architecture
-	codeFile string // Filename of input code
 
 	verbosity string // Log verbosity
 
@@ -61,18 +60,9 @@ func handleArch(cfg *dbg.Config) error {
 func handleMem(cfg *dbg.Config) error {
 	var err error = nil
 
-	haveCodeFile := (args.codeFile != "")
 	haveCodeRegion := args.mem.Contains("code")
-
-	if haveCodeFile && haveCodeRegion {
-		return errors.New("Both a code file and code memory region were specified.")
-	} else if haveCodeFile {
-		err = args.mem.Set(fmt.Sprintf("code:0x%08x:0x%08x:rwx:%s",
-			cfg.Arch.Defaults().CodeBase,
-			cfg.Arch.Defaults().CodeSize,
-			args.codeFile))
-	} else {
-		return errors.New("Either a code file (-f) or code memory region (-m) must be provided.")
+	if !haveCodeRegion {
+		return errors.New("A memory mapped region named \"code\" must be provided.")
 	}
 
 	cfg.Mem = args.mem
@@ -89,8 +79,7 @@ func handleRegDefs(cfg *dbg.Config) error {
 func InitCommonFlags() {
 	flag.StringVar(&args.verbosity, "v", "warning", "Logging verbosity.")
 	flag.StringVar(&args.arch, "a", "arm", "Target architecture.")
-	flag.StringVar(&args.codeFile, "f", "", "Code file to execute.")
-	flag.Var(&args.mem, "m", "Mapped Memory regions.")
+	flag.Var(&args.mem, "m", "Mapped Memory regions. Specify in the form: " + dbg.MemRegionUsage())
 	flag.Var(&args.regDefs, "r", "Set initial register value.")
 }
 
