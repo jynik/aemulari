@@ -40,5 +40,9 @@ func (p Permissions) String() string {
 		buf.WriteRune('x')
 	}
 
+	if buf.Len() == 0 {
+		return "(none)"
+	}
+
 	return buf.String()
 }
