@@ -1,7 +1,7 @@
 *~
 *.sw[a-p]
-*.bin
 *.o
 
-go/cmd/aemulari/aemulari
-go/cmd/aemulari-gui/aemulari-gui
+.deps
+aemulari
+aemulari-gui
