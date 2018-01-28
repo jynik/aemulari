@@ -15,7 +15,7 @@ import (
 type cmdlineArgs struct {
 
 	// Raw arguments
-	arch     string // Target architecture
+	arch string // Target architecture
 
 	verbosity string // Log verbosity
 
@@ -79,7 +79,7 @@ func handleRegDefs(cfg *dbg.Config) error {
 func InitCommonFlags() {
 	flag.StringVar(&args.verbosity, "v", "warning", "Logging verbosity.")
 	flag.StringVar(&args.arch, "a", "arm", "Target architecture.")
-	flag.Var(&args.mem, "m", "Mapped Memory regions. Specify in the form: " + dbg.MemRegionUsage())
+	flag.Var(&args.mem, "m", "Mapped Memory regions. Specify in the form: "+dbg.MemRegionUsage())
 	flag.Var(&args.regDefs, "r", "Set initial register value.")
 }
 

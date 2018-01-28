@@ -281,8 +281,8 @@ var arm_cpsr RegisterDef = RegisterDef{
 func armConstructor() Arch {
 	arm := &Arm{
 		ArchBase{
-			archType: Type{uc.ARCH_ARM, cs.CS_ARCH_ARM},
-			archMode: Mode{uc.MODE_ARM, cs.CS_MODE_ARM},
+			archType:    Type{uc.ARCH_ARM, cs.CS_ARCH_ARM},
+			archMode:    Mode{uc.MODE_ARM, cs.CS_MODE_ARM},
 			maxInstrLen: 4,
 		},
 	}

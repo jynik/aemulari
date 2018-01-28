@@ -4,7 +4,7 @@ const VARIABLE_INSTR_LEN = 0
 
 type ArchBase struct {
 	archType    Type
-	archMode	Mode
+	archMode    Mode
 	maxInstrLen uint
 	RegisterMap
 }
