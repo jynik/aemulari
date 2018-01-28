@@ -36,10 +36,14 @@ aemulari-gui: ./cmd/aemulari-gui/aemulari-gui.go $(SRC) $(DEPS)
 	$(GO) get -u github.com/op/go-logging
 	@touch $@
 
+test-asm:
+	make -C test-asm
+
 clean:
 	rm -f aemulari aemulari-gui
+	make -C test-asm clean
 
 realclean: clean
 	rm -rf .deps
 
-.PHONY: clean
+.PHONY: clean test-asm
