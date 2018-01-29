@@ -4,10 +4,15 @@ ASFLAGS := -x assembler-with-cpp -Wall -Wextra -Werror
 OBJCOPY := arm-none-eabi-objcopy
 OBJCOPYFLAGS := -O binary
 
-SRC := $(wildcard *.S)
-HDR := $(wildcard *.h)
-OBJ := $(SRC:.S=.o)
-BIN := $(SRC:.S=.bin)
+HDR 		:= $(wildcard *.h)
+
+ARM_SRC 	:= $(wildcard *.arm.S)
+ARM_OBJ := $(SRC:.S=.o)
+
+THUMB_SRC	:= $(wildcard *.thumb.S)
+THUMB_OBJ	:= $(wildcard *.thumb.o)
+
+BIN 		:= $(ARM_SRC:.S=.bin) $(THUMB_SRC:.S=.bin)
 
 ifneq ($(STACK_BASE),)
 	ASFLAGS += "-DSTACK_BASE=#$(STACK_BASE)"
@@ -15,15 +20,14 @@ endif
 
 all: $(BIN)
 
-%.o: %.S $(HDR)
+%.arm.o: %.arm.S $(HDR)
 	$(AS) $(ASFLAGS) -c $< -o $@
+
+%.thumb.o: %.thumb.S $(HDR)
+	$(AS) -mthumb -mcpu=Cortex-M4 $(ASFLAGS) -c $< -o $@
 
 %.bin: %.o $(HDR)
 	$(OBJCOPY) $(OBJCOPYFLAGS) $< $@
 
 clean:
 	rm -f *.bin
-
-ifneq ($(KEEP_OBJ),)
-.PRECIOUS: %.o
-endif
