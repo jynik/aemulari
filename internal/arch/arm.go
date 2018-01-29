@@ -278,11 +278,22 @@ var arm_cpsr RegisterDef = RegisterDef{
 	},
 }
 
-func armConstructor() Arch {
+func armConstructor(mode string) (Arch, error) {
+	var modeInfo Mode
+
+	switch mode {
+	case "arm", "":
+		modeInfo = Mode{uc.MODE_ARM, cs.CS_MODE_ARM}
+	case "thumb", "thumb2":
+		modeInfo = Mode{uc.MODE_THUMB, cs.CS_MODE_THUMB}
+	default:
+		return nil, fmt.Errorf("Invalid Arm mode specified (\"%s\")", mode)
+	}
+
 	arm := &Arm{
 		ArchBase{
 			archType:    Type{uc.ARCH_ARM, cs.CS_ARCH_ARM},
-			archMode:    Mode{uc.MODE_ARM, cs.CS_MODE_ARM},
+			archMode:    modeInfo,
 			maxInstrLen: 4,
 		},
 	}
@@ -305,7 +316,7 @@ func armConstructor() Arch {
 	arm.RegisterMap.add([]string{"pc", "r15"}, &arm_r15)
 	arm.RegisterMap.add([]string{"cpsr", "r16"}, &arm_cpsr)
 
-	return arm
+	return arm, nil
 }
 
 func (a *Arm) Endianness(rvs []RegisterValue) Endianness {

@@ -37,7 +37,8 @@ func (e *Exception) Occurred() bool {
 	return e.desc != ""
 }
 
-type archConstructor func() Arch
+// args form a single string in the form: arch[:mode]
+type archConstructor func(args string) (Arch, error)
 
 type Arch interface {
 	// Return the processor's architecture type
@@ -90,14 +91,27 @@ type Arch interface {
 	Registers() []*RegisterDef
 }
 
-func New(arch string) (Arch, error) {
-	arch = strings.Trim(arch, "\r\n\t ")
-	arch = strings.ToLower(arch)
+// Create a new Arch instance matching the architecture and mode
+// specified by "arch[:mode]"
+func New(args string) (Arch, error) {
+	var arch, mode string
+
+	args = strings.Trim(args, "\r\n\t ")
+	args = strings.ToLower(args)
+
+	argv := strings.Split(args, ":")
+	arch = argv[0]
+
+	if len(argv) > 1 {
+		mode = argv[1]
+	} else {
+		mode = ""
+	}
 
 	if newArch, found := archMap[arch]; !found {
 		return nil, fmt.Errorf("Unsupported architecture: %s", arch)
 	} else {
-		return newArch(), nil
+		return newArch(mode)
 	}
 }
 
