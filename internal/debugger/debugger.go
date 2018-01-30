@@ -56,13 +56,17 @@ type exceptionInfo struct {
 	last arch.Exception
 }
 
-// Data used to implement single-stepping execution
+// Data used to implement stepping and breakpoints
 type codeStep struct {
 	dbg     *Debugger
-	pc      uint64
 	count   int64
 	hook    uc.Hook
 	options uc.UcOptions
+
+	// Need to backup state prior to stopping emulator and restore it
+	// after we return from our execution. Unclear if this is necessitated
+	// due to a Unicorn defect, or our own misuse of the framework
+	regs []arch.RegisterValue
 }
 
 var log = logging.MustGetLogger("")
@@ -82,9 +86,9 @@ func (d *Debugger) Reset() error {
 	d.mu.Close()
 	d.cs.Close()
 
-	/* Reset to original configuration, but keep memory mapppings
+	/* Reset to original configuration, but keep memory mappings
 	 * This is intended to allow us to map regions as we discover they're
-	 * neccessary, and not have to re-do that with each reset.
+	 * necessary, and not have to re-do that with each reset.
 	 *
 	 * TODO: Make this an opt-out configuration item?
 	 */
@@ -98,8 +102,9 @@ func (d *Debugger) init(cfg Config, reset bool) error {
 	var err error
 
 	d.cfg = cfg
+
 	archType := d.cfg.Arch.Type()
-	archMode := d.cfg.Arch.Mode(d.cfg.RegDefs)
+	archMode := d.cfg.Arch.InitialMode()
 
 	// Keep existing breakpoints if we're resetting the debugger
 	if !reset {
@@ -135,11 +140,16 @@ func (d *Debugger) init(cfg Config, reset bool) error {
 	var loadedPc bool = false
 	for _, r := range d.cfg.RegDefs {
 		log.Debugf("Loading %s", r)
+		if r.Reg.IsProgramCounter() {
+			loadedPc = true
+			r.Value, err = d.cfg.Arch.InitialPC(r.Value)
+			if err != nil {
+				return d.closeAll(err)
+			}
+		}
+
 		if err := d.mu.RegWrite(r.Reg.Uc(), r.Value); err != nil {
 			return d.closeAll(err)
-		} else if r.Reg.IsProgramCounter() {
-			loadedPc = true
-			d.step.pc = r.Value
 		}
 	}
 
@@ -152,12 +162,14 @@ func (d *Debugger) init(cfg Config, reset bool) error {
 		if err != nil {
 			return d.closeAll(err)
 		}
-
-		if err := d.mu.RegWrite(pc.Uc(), codeMem.base); err != nil {
+		val, err := d.cfg.Arch.InitialPC(codeMem.base)
+		if err != nil {
 			return d.closeAll(err)
 		}
 
-		d.step.pc = codeMem.base
+		if err := d.mu.RegWrite(pc.Uc(), val); err != nil {
+			return d.closeAll(err)
+		}
 	}
 
 	// Code stepping setup
@@ -280,6 +292,26 @@ func (d *Debugger) Endianness() (arch.Endianness, error) {
 	return d.cfg.Arch.Endianness(regs), nil
 }
 
+func (d *Debugger) pc() (uint64, error) {
+	regs, err := d.ReadRegAll()
+	if err != nil {
+		return 0xdeadbeefdeadbeef, err
+	}
+
+	for _, reg := range regs {
+		if reg.Reg.IsProgramCounter() {
+			pc, err := d.cfg.Arch.CurrentPC(reg.Value, regs)
+			if err != nil {
+				return 0xdeadbeefdeadbeef, err
+			}
+
+			return pc, nil
+		}
+	}
+
+	panic("Failed to locate program counter")
+}
+
 func (d *Debugger) ReadRegAll() ([]arch.RegisterValue, error) {
 	var err error
 
@@ -320,11 +352,24 @@ func (d *Debugger) ReadRegByName(name string) (arch.RegisterValue, error) {
 }
 
 func (d *Debugger) WriteReg(rv arch.RegisterValue) error {
-	err := d.mu.RegWrite(rv.Reg.Uc(), rv.Value)
-	if err == nil && rv.Reg.IsProgramCounter() {
-		d.step.pc = rv.Value
+	if rv.Reg.IsProgramCounter() {
+		if regs, err := d.ReadRegAll(); err != nil {
+			return err
+		} else {
+			rv.Value, err = d.cfg.Arch.CurrentPC(rv.Value, regs)
+		}
 	}
-	return err
+	return d.mu.RegWrite(rv.Reg.Uc(), rv.Value)
+}
+
+func (d *Debugger) WriteRegs(rvs []arch.RegisterValue) error {
+	for _, rv := range rvs {
+		if err := d.WriteReg(rv); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (d *Debugger) WriteRegByName(name string, value uint64) error {
@@ -349,38 +394,45 @@ func (d *Debugger) WriteMem(addr uint64, data []byte) error {
 // A negative count implies "Run until a breakpoint or exception"
 // Returns (hitException, intNumber, err)
 func (d *Debugger) Step(count int64) (arch.Exception, error) {
+	d.step.regs = []arch.RegisterValue{}
 	d.step.count = count
 	d.exInfo.last = arch.Exception{}
 
 	log.Debugf("Stepping %d instructions.", d.step.count)
 
-	err := d.mu.StartWithOptions(d.step.pc, d.code().End(), &d.step.options)
-	err2 := d.WriteRegByName("pc", d.step.pc)
-
-	log.Debugf("PC @ 0x%08x after Step()", d.step.pc)
-
+	pc, err := d.pc()
 	if err != nil {
 		return d.exInfo.last, err
-	} else {
-		return d.exInfo.last, err2
 	}
+
+	err = d.mu.StartWithOptions(pc, d.code().End(), &d.step.options)
+	if err != nil {
+		return d.exInfo.last, err
+	}
+
+	return d.exInfo.last, d.WriteRegs(d.step.regs)
 }
 
 func (d *Debugger) Continue() (arch.Exception, error) {
+	d.step.regs = []arch.RegisterValue{}
 	d.step.count = -1
 	d.exInfo.last = arch.Exception{}
 
-	err := d.mu.StartWithOptions(d.step.pc, d.code().End(), &d.step.options)
+	pc, err := d.pc()
 	if err != nil {
 		return d.exInfo.last, err
 	}
 
-	return d.exInfo.last, d.WriteRegByName("pc", d.step.pc)
+	err = d.mu.StartWithOptions(pc, d.code().End(), &d.step.options)
+	if err != nil {
+		return d.exInfo.last, err
+	}
+
+	return d.exInfo.last, d.WriteRegs(d.step.regs)
 }
 
 func (h *codeStep) cb(mu uc.Unicorn, addr uint64, size uint32) {
 	d := h.dbg
-	d.step.pc = addr
 
 	log.Debugf("Code step hook @ 0x%08x (%d), countdown=%d", addr, size, d.step.count)
 
@@ -390,7 +442,17 @@ func (h *codeStep) cb(mu uc.Unicorn, addr uint64, size uint32) {
 	}
 
 	if breakpointTriggered || d.step.count == 0 {
-		if err := mu.Stop(); err != nil {
+		var err error
+
+		// The state of PC and status registers (e.g., ARM CPSR) will change
+		// after calling mu.Stop(). Back them up and restore them for the next
+		// time we start.
+		d.step.regs, err = d.ReadRegAll()
+		if err != nil {
+			log.Errorf("Failed to backup registers: %s", err)
+		}
+
+		if err = mu.Stop(); err != nil {
 			log.Errorf("Failed to halt execution: %s", err)
 		} else {
 			log.Debugf("Stopping execution @ 0x%08x", addr)

@@ -292,8 +292,8 @@ func armConstructor(mode string) (Arch, error) {
 
 	arm := &Arm{
 		ArchBase{
-			archType:    Type{uc.ARCH_ARM, cs.CS_ARCH_ARM},
-			archMode:    modeInfo,
+			processor:   Type{uc.ARCH_ARM, cs.CS_ARCH_ARM},
+			mode:        modeInfo,
 			maxInstrLen: 4,
 		},
 	}
@@ -319,6 +319,32 @@ func armConstructor(mode string) (Arch, error) {
 	return arm, nil
 }
 
+func (a *Arm) InitialPC(pc uint64) (uint64, error) {
+	switch a.mode.Uc {
+	case uc.MODE_ARM:
+		return pc, nil
+	case uc.MODE_THUMB:
+		return pc | 0x1, nil
+	default:
+		panic("Unexpected processor mode in arm.InitialPC()")
+	}
+}
+
+func (a *Arm) CurrentPC(pc uint64, rvs []RegisterValue) (uint64, error) {
+	for _, rv := range rvs {
+		if rv.Reg.name == "cpsr" {
+			// Test THUMB bit
+			if (rv.Value & (1 << 5)) != 0 {
+				return pc | 0x1, nil
+			}
+
+			return pc, nil
+		}
+	}
+
+	panic("arm.CurrentPC() was not passed CPSR.")
+}
+
 func (a *Arm) Endianness(rvs []RegisterValue) Endianness {
 	for _, rv := range rvs {
 		if rv.Reg.name == "cpsr" {
@@ -331,25 +357,7 @@ func (a *Arm) Endianness(rvs []RegisterValue) Endianness {
 		}
 	}
 
-	panic("armEndianness() was not passed CPSR.")
-}
-
-func (a *Arm) Mode(rvs []RegisterValue) Mode {
-	for _, rv := range rvs {
-		if rv.Reg.name == "cpsr" {
-			/* Test CPSR Thumb bit.
-			 * FIXME Technically we should test the Jazelle bit set, but meh - will add it as-needed */
-			if (rv.Value & (1 << 9)) != 0 {
-				return Mode{uc.MODE_THUMB, cs.CS_MODE_THUMB}
-			}
-
-			return Mode{uc.MODE_ARM, cs.CS_MODE_ARM}
-		}
-		fmt.Printf("%s\n", rv.Reg.name)
-	}
-
-	// FIXME Default to ARM for now
-	return Mode{uc.MODE_ARM, cs.CS_MODE_ARM}
+	panic("arm.Endianness() was not passed CPSR.")
 }
 
 func (a *Arm) Exception(intno uint32, regs []RegisterValue, instr []byte) (ex Exception) {

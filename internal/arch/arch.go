@@ -44,8 +44,18 @@ type Arch interface {
 	// Return the processor's architecture type
 	Type() Type
 
-	// Return the current processor mode
-	Mode(regs []RegisterValue) Mode
+	// Return the initial processor mode
+	InitialMode() Mode
+
+	// Adjust, if neccessary (e.g., based upon mode or alignment), and return
+	// the initial PC value.  For example, we'll need to set the LSB for ARM
+	// THUMB mode. Report errors if a provided PC value is invalid.
+	InitialPC(pc uint64) (uint64, error)
+
+	// Adjust current PC, if neccessary.  This allows architecture-specifics
+	// (e.g., mode denoted in status reguster) to be considered before
+	// (re)starting the emulator. Returns error on invalid value.
+	CurrentPC(pc uint64, regs []RegisterValue) (uint64, error)
 
 	/* Return the max size of an instruction, in bytes */
 	MaxInstrLen() uint
