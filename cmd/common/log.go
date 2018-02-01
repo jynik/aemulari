@@ -1,4 +1,4 @@
-package log
+package common
 
 import (
 	"github.com/op/go-logging"
@@ -7,7 +7,7 @@ import (
 
 const fmt string = "%{color}[%{level:.8s}]%{color:reset} %{message}"
 
-func Init() {
+func InitLogging() {
 	logBackend := logging.NewLogBackend(os.Stderr, "", 0)
 	logFmt := logging.MustStringFormatter(fmt)
 	logFormatter := logging.NewBackendFormatter(logBackend, logFmt)

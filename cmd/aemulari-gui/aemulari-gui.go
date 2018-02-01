@@ -4,28 +4,25 @@ import (
 	"fmt"
 	"os"
 
-	"../../internal/cmdline"
-	"../../internal/debugger"
-	"../../internal/log"
-	"../../internal/ui"
+	"../../aemulari"
+	"../common"
+	"./ui"
 )
 
 func main() {
 	var gui *ui.Ui
-	var dbg *debugger.Debugger
+	var dbg *aemulari.Debugger
 	var err error
 
-	log.Init()
+	common.cmdline.InitCommonFlags()
 
-	cmdline.InitCommonFlags()
-
-	cfg, err := cmdline.Parse()
+	cfg, err := common.cmdline.Parse()
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)
 	}
 
-	dbg, err = debugger.New(cfg)
+	dbg, err = aemulari.NewDebugger(cfg)
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)

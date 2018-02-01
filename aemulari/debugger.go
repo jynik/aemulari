@@ -1,4 +1,4 @@
-package debugger
+package aemulari
 
 import (
 	"encoding/hex"
@@ -72,7 +72,7 @@ type codeStep struct {
 var log = logging.MustGetLogger("")
 
 // Instantiate and configure a new Debugger
-func New(c Config) (*Debugger, error) {
+func NewDebugger(c Config) (*Debugger, error) {
 	var d Debugger
 
 	if err := d.init(c, false); err != nil {

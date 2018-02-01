@@ -1,21 +1,21 @@
 package main
 
 import (
+	"encoding"
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
-	"../../internal/cmdline"
-	"../../internal/debugger"
-	mylog "../../internal/log"
-	"../../internal/ui"
 	"github.com/op/go-logging"
+
+	"../../aemulari"
 )
 
 type Flags struct {
 	count    int64               // Instruction count
 	showRegs bool                // Show register values after execution
-	dumpMem  debugger.MemRegions // Memory regions to display after execution
+	dumpMem  aemulari.MemRegions // Memory regions to display after execution
 }
 
 func initFlags(f *Flags) {
@@ -28,11 +28,35 @@ func initFlags(f *Flags) {
 
 var log = logging.MustGetLogger("")
 
+var linesep string = strings.Repeat("-", 80)
+
+func PrintRegisters(rvs []arch.RegisterValue) {
+	var rv arch.RegisterValue
+	var i int
+
+	fmt.Println(" Registers\n" + linesep)
+	for i, rv = range rvs {
+		fmt.Printf("%s    ", &rv)
+		if (i+1)%3 == 0 {
+			fmt.Println()
+		}
+	}
+
+	if (i+1)%3 != 0 {
+		fmt.Println()
+	}
+	fmt.Println()
+}
+
+func PrintMemory(name string, addr uint64, data []byte) {
+	fmt.Printf(" Memory at 0x%08x (%s)\n%s\n%s\n", addr, name, linesep, hex.Dump(data))
+}
+
 func main() {
 	var ret int = 0
 	var flags Flags
 
-	mylog.Init()
+	log.Init()
 
 	cmdline.InitCommonFlags()
 	initFlags(&flags)

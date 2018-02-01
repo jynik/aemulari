@@ -1,4 +1,4 @@
-package debugger
+package aemulari
 
 import (
 	"fmt"
