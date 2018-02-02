@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"../arch"
+	ae "../../../aemulari"
 )
 
 func hexSeq(s string) ([]byte, bool) {
@@ -45,10 +45,10 @@ func i8Bytes(s string) ([]byte, bool) {
 	return []byte{uint8(val)}, true
 }
 
-func u16Endian(val uint16, e arch.Endianness) []byte {
+func u16Endian(val uint16, e ae.Endianness) []byte {
 	var ret []byte = make([]byte, 2)
 
-	if e == arch.BigEndian {
+	if e == ae.BigEndian {
 		binary.BigEndian.PutUint16(ret, val)
 	} else {
 		binary.LittleEndian.PutUint16(ret, val)
@@ -57,7 +57,7 @@ func u16Endian(val uint16, e arch.Endianness) []byte {
 	return ret
 }
 
-func u16Bytes(s string, e arch.Endianness) ([]byte, bool) {
+func u16Bytes(s string, e ae.Endianness) ([]byte, bool) {
 	if !strings.HasPrefix(s, "u16(") || !strings.HasSuffix(s, ")") {
 		return []byte{}, false
 	}
@@ -70,7 +70,7 @@ func u16Bytes(s string, e arch.Endianness) ([]byte, bool) {
 	return u16Endian(uint16(val), e), true
 }
 
-func i16Bytes(s string, e arch.Endianness) ([]byte, bool) {
+func i16Bytes(s string, e ae.Endianness) ([]byte, bool) {
 	if !strings.HasPrefix(s, "i16(") || !strings.HasSuffix(s, ")") {
 		return []byte{}, false
 	}
@@ -83,10 +83,10 @@ func i16Bytes(s string, e arch.Endianness) ([]byte, bool) {
 	return u16Endian(uint16(val), e), true
 }
 
-func u32Endian(val uint32, e arch.Endianness) []byte {
+func u32Endian(val uint32, e ae.Endianness) []byte {
 	var ret []byte = make([]byte, 4)
 
-	if e == arch.BigEndian {
+	if e == ae.BigEndian {
 		binary.BigEndian.PutUint32(ret, val)
 	} else {
 		binary.LittleEndian.PutUint32(ret, val)
@@ -95,7 +95,7 @@ func u32Endian(val uint32, e arch.Endianness) []byte {
 	return ret
 }
 
-func u32Bytes(s string, e arch.Endianness) ([]byte, bool) {
+func u32Bytes(s string, e ae.Endianness) ([]byte, bool) {
 	if !strings.HasPrefix(s, "u32(") || !strings.HasSuffix(s, ")") {
 		return []byte{}, false
 	}
@@ -107,7 +107,7 @@ func u32Bytes(s string, e arch.Endianness) ([]byte, bool) {
 
 	var ret []byte = make([]byte, 4)
 
-	if e == arch.BigEndian {
+	if e == ae.BigEndian {
 		binary.BigEndian.PutUint32(ret, uint32(val))
 	} else {
 		binary.LittleEndian.PutUint32(ret, uint32(val))
@@ -116,7 +116,7 @@ func u32Bytes(s string, e arch.Endianness) ([]byte, bool) {
 	return ret, true
 }
 
-func i32Bytes(s string, e arch.Endianness) ([]byte, bool) {
+func i32Bytes(s string, e ae.Endianness) ([]byte, bool) {
 	if !strings.HasPrefix(s, "i32(") || !strings.HasSuffix(s, ")") {
 		return []byte{}, false
 	}
@@ -128,7 +128,7 @@ func i32Bytes(s string, e arch.Endianness) ([]byte, bool) {
 
 	var ret []byte = make([]byte, 4)
 
-	if e == arch.BigEndian {
+	if e == ae.BigEndian {
 		binary.BigEndian.PutUint32(ret, uint32(val))
 	} else {
 		binary.LittleEndian.PutUint32(ret, uint32(val))
@@ -137,10 +137,10 @@ func i32Bytes(s string, e arch.Endianness) ([]byte, bool) {
 	return ret, true
 }
 
-func u64Endian(val uint64, e arch.Endianness) []byte {
+func u64Endian(val uint64, e ae.Endianness) []byte {
 	var ret []byte = make([]byte, 8)
 
-	if e == arch.BigEndian {
+	if e == ae.BigEndian {
 		binary.BigEndian.PutUint64(ret, val)
 	} else {
 		binary.LittleEndian.PutUint64(ret, val)
@@ -149,7 +149,7 @@ func u64Endian(val uint64, e arch.Endianness) []byte {
 	return ret
 }
 
-func u64Bytes(s string, e arch.Endianness) ([]byte, bool) {
+func u64Bytes(s string, e ae.Endianness) ([]byte, bool) {
 	if !strings.HasPrefix(s, "u64(") || !strings.HasSuffix(s, ")") {
 		return []byte{}, false
 	}
@@ -162,7 +162,7 @@ func u64Bytes(s string, e arch.Endianness) ([]byte, bool) {
 	return u64Endian(val, e), true
 }
 
-func i64Bytes(s string, e arch.Endianness) ([]byte, bool) {
+func i64Bytes(s string, e ae.Endianness) ([]byte, bool) {
 	if !strings.HasPrefix(s, "i64(") || !strings.HasSuffix(s, ")") {
 		return []byte{}, false
 	}
@@ -175,7 +175,7 @@ func i64Bytes(s string, e arch.Endianness) ([]byte, bool) {
 	return u64Endian(uint64(val), e), true
 }
 
-func UBytes(s string, e arch.Endianness) ([]byte, bool) {
+func UBytes(s string, e ae.Endianness) ([]byte, bool) {
 	val, err := strconv.ParseUint(s, 0, 64)
 	if err != nil {
 		return []byte{}, false
@@ -192,7 +192,7 @@ func UBytes(s string, e arch.Endianness) ([]byte, bool) {
 	return u64Endian(val, e), true
 }
 
-func IBytes(s string, e arch.Endianness) ([]byte, bool) {
+func IBytes(s string, e ae.Endianness) ([]byte, bool) {
 	val, err := strconv.ParseInt(s, 0, 64)
 	if err != nil {
 		return []byte{}, false
@@ -209,7 +209,7 @@ func IBytes(s string, e arch.Endianness) ([]byte, bool) {
 	return u64Endian(uint64(val), e), true
 }
 
-func parseValue(valStr string, e arch.Endianness) ([]byte, error) {
+func parseValue(valStr string, e ae.Endianness) ([]byte, error) {
 	if ret, ok := hexSeq(valStr); ok {
 		return ret, nil
 	} else if ret, ok = u8Bytes(valStr); ok {

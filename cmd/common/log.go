@@ -5,11 +5,9 @@ import (
 	"os"
 )
 
-const fmt string = "%{color}[%{level:.8s}]%{color:reset} %{message}"
-
 func InitLogging() {
 	logBackend := logging.NewLogBackend(os.Stderr, "", 0)
-	logFmt := logging.MustStringFormatter(fmt)
+	logFmt := logging.MustStringFormatter("%{color}[%{level:.8s}]%{color:reset} %{message}")
 	logFormatter := logging.NewBackendFormatter(logBackend, logFmt)
 	logging.SetBackend(logFormatter)
 }

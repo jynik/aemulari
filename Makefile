@@ -1,21 +1,19 @@
 GO ?= go
 
 DEPS := .deps/unicorn .deps/gapstone .deps/gocui .deps/gologging
+SRC  := $(wildcard aemulari/*.go)
+BIN  := bin/aemulari bin/aemulari-gui
 
-SRC  := $(wildcard internal/arch/*.go) \
-		$(wildcard internal/cmdline/*.go) \
-		$(wildcard internal/debugger/*.go) \
-		$(wildcard internal/log/*.go) \
-		$(wildcard internal/ui/*.go) \
+all: bin/aemulari bin/aemulari-gui test-asm
 
+bin:
+	@mkdir -p $@
 
-all: aemulari aemulari-gui
+bin/aemulari: ./cmd/aemulari/aemulari.go $(SRC) $(DEPS) bin
+	$(GO) build -o $@ $<
 
-aemulari: ./cmd/aemulari/aemulari.go $(SRC) $(DEPS)
-	$(GO) build $<
-
-aemulari-gui: ./cmd/aemulari-gui/aemulari-gui.go $(SRC) $(DEPS)
-	$(GO) build $<
+bin/aemulari-gui: ./cmd/aemulari-gui/aemulari-gui.go $(SRC) $(DEPS) bin
+	$(GO) build -o $@ $<
 
 .deps:
 	@mkdir -p .deps
@@ -40,7 +38,7 @@ test-asm:
 	make -C test-asm
 
 clean:
-	rm -f aemulari aemulari-gui
+	rm -rf bin
 	make -C test-asm clean
 
 realclean: clean

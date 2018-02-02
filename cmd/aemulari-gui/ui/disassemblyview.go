@@ -6,7 +6,7 @@ import (
 
 	"github.com/jroimartin/gocui"
 
-	dbg "../debugger"
+	ae "../../../aemulari"
 )
 
 type DisassemblyInfo struct {
@@ -15,8 +15,8 @@ type DisassemblyInfo struct {
 }
 
 type DisassemblyList struct {
-	addr    uint64            // Address of first instruction in disassembly
-	entries []dbg.Disassembly // Disassembly list
+	addr    uint64           // Address of first instruction in disassembly
+	entries []ae.Disassembly // Disassembly list
 }
 
 func (ui *Ui) refreshDisasmView() error {
@@ -27,13 +27,13 @@ func (ui *Ui) refreshDisasmView() error {
 	}
 }
 
-func (d DisassemblyList) Contains(addr uint64) (bool, dbg.Disassembly) {
+func (d DisassemblyList) Contains(addr uint64) (bool, ae.Disassembly) {
 	for _, e := range d.entries {
 		if e.AddressU64 == addr {
 			return true, e
 		}
 	}
-	return false, dbg.Disassembly{}
+	return false, ae.Disassembly{}
 }
 
 func (ui Ui) getBpSymbolAt(addr uint64) string {
@@ -74,7 +74,7 @@ func (ui *Ui) updateDisasmView(view *gocui.View) error {
 	currLen := len(ui.disasm.curr.entries)
 
 	if ui.disasm.prev.addr != ui.disasm.curr.addr || prevLen != currLen {
-		ui.disasm.prev.entries = make([]dbg.Disassembly, currLen)
+		ui.disasm.prev.entries = make([]ae.Disassembly, currLen)
 		ui.disasm.prev.addr = ui.disasm.curr.addr
 		copy(ui.disasm.prev.entries, ui.disasm.curr.entries)
 	}

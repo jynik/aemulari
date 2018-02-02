@@ -1,4 +1,4 @@
-package arch
+package aemulari
 
 const VARIABLE_INSTR_LEN = 0
 

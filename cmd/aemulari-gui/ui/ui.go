@@ -3,8 +3,7 @@ package ui
 import (
 	"github.com/jroimartin/gocui"
 
-	"../arch"
-	dbg "../debugger"
+	ae "../../../aemulari"
 	"./theme"
 )
 
@@ -12,7 +11,7 @@ type Ui struct {
 	g     *gocui.Gui
 	views Views
 
-	dbg *dbg.Debugger
+	dbg *ae.Debugger
 	pc  uint64
 
 	disasm DisassemblyInfo
@@ -26,11 +25,11 @@ type Ui struct {
 	quit bool
 }
 
-func Create(dbg *dbg.Debugger) (*Ui, error) {
+func Create(dbg *ae.Debugger) (*Ui, error) {
 	var ui Ui
 	var err error
-	var rv arch.RegisterValue
-	var rvs []arch.RegisterValue
+	var rv ae.RegisterValue
+	var rvs []ae.RegisterValue
 
 	rvs, err = dbg.ReadRegAll()
 	if err != nil {
@@ -58,7 +57,7 @@ func Create(dbg *dbg.Debugger) (*Ui, error) {
 	}
 
 	ui.dbg = dbg
-	if rv, err = dbg.ReadRegByName("pc"); err != nil {
+	if rv, err = ui.dbg.ReadRegByName("pc"); err != nil {
 		return nil, err
 	} else {
 		ui.pc = rv.Value

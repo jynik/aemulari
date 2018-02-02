@@ -8,8 +8,7 @@ import (
 
 	"github.com/op/go-logging"
 
-	"../arch"
-	dbg "../debugger"
+	ae "../../aemulari"
 )
 
 type cmdlineArgs struct {
@@ -22,14 +21,14 @@ type cmdlineArgs struct {
 	regDefs appender // Initial register values
 
 	// Parsed arguments
-	mem  dbg.MemRegions // Memory regions to configure
-	regs arch.RegisterMap
+	mem  ae.MemRegions // Memory regions to configure
+	regs ae.RegisterMap
 }
 
 var args cmdlineArgs
 var log = logging.MustGetLogger("")
 
-func handleVerbosity(cfg *dbg.Config) error {
+func handleVerbosity(cfg *ae.Config) error {
 
 	args.verbosity = strings.ToLower(strings.Trim(args.verbosity, "\r\n\t "))
 	if args.verbosity == "critical" {
@@ -51,13 +50,13 @@ func handleVerbosity(cfg *dbg.Config) error {
 	return nil
 }
 
-func handleArch(cfg *dbg.Config) error {
+func handleArch(cfg *ae.Config) error {
 	var err error
-	cfg.Arch, err = arch.New(args.arch)
+	cfg.Arch, err = ae.New(args.arch)
 	return err
 }
 
-func handleMem(cfg *dbg.Config) error {
+func handleMem(cfg *ae.Config) error {
 	var err error = nil
 
 	haveCodeRegion := args.mem.Contains("code")
@@ -70,7 +69,7 @@ func handleMem(cfg *dbg.Config) error {
 	return err
 }
 
-func handleRegDefs(cfg *dbg.Config) error {
+func handleRegDefs(cfg *ae.Config) error {
 	var err error
 	cfg.RegDefs, err = cfg.Arch.ParseRegisters(args.regDefs)
 	return err
@@ -79,14 +78,14 @@ func handleRegDefs(cfg *dbg.Config) error {
 func InitCommonFlags() {
 	flag.StringVar(&args.verbosity, "v", "warning", "Logging verbosity.")
 	flag.StringVar(&args.arch, "a", "arm", "Target architecture.")
-	flag.Var(&args.mem, "m", "Mapped Memory regions. Specify in the form: "+dbg.MemRegionUsage())
+	flag.Var(&args.mem, "m", "Mapped Memory regions. Specify in the form: "+ae.MemRegionUsage())
 	flag.Var(&args.regDefs, "r", "Set initial register value.")
 }
 
-func Parse() (dbg.Config, error) {
-	var cfg dbg.Config
+func Parse() (ae.Config, error) {
+	var cfg ae.Config
 
-	args.mem = make(dbg.MemRegions)
+	args.mem = make(ae.MemRegions)
 
 	flag.Parse()
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"os"
@@ -9,17 +9,18 @@ import (
 
 	"github.com/op/go-logging"
 
-	"../../aemulari"
+	ae "../../aemulari"
+	"../common"
 )
 
 type Flags struct {
-	count    int64               // Instruction count
-	showRegs bool                // Show register values after execution
-	dumpMem  aemulari.MemRegions // Memory regions to display after execution
+	count    int64         // Instruction count
+	showRegs bool          // Show register values after execution
+	dumpMem  ae.MemRegions // Memory regions to display after execution
 }
 
 func initFlags(f *Flags) {
-	f.dumpMem = make(debugger.MemRegions)
+	f.dumpMem = make(ae.MemRegions)
 
 	flag.Int64Var(&f.count, "n", -1, "Execute only the specified number of instructions.")
 	flag.BoolVar(&f.showRegs, "R", false, "Show register values after execution.")
@@ -30,8 +31,8 @@ var log = logging.MustGetLogger("")
 
 var linesep string = strings.Repeat("-", 80)
 
-func PrintRegisters(rvs []arch.RegisterValue) {
-	var rv arch.RegisterValue
+func PrintRegisters(rvs []ae.RegisterValue) {
+	var rv ae.RegisterValue
 	var i int
 
 	fmt.Println(" Registers\n" + linesep)
@@ -56,18 +57,18 @@ func main() {
 	var ret int = 0
 	var flags Flags
 
-	log.Init()
+	common.InitLogging()
 
-	cmdline.InitCommonFlags()
+	common.InitCommonFlags()
 	initFlags(&flags)
 
-	cfg, err := cmdline.Parse()
+	cfg, err := common.Parse()
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
-	dbg, err := debugger.New(cfg)
+	dbg, err := ae.NewDebugger(cfg)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
@@ -89,7 +90,7 @@ func main() {
 			log.Error(err)
 		} else {
 			fmt.Println()
-			ui.PrintRegisters(rvs)
+			PrintRegisters(rvs)
 		}
 	}
 
@@ -101,7 +102,7 @@ func main() {
 			log.Error(err)
 			break
 		} else {
-			ui.PrintMemory(m.Name(), base, data)
+			PrintMemory(m.Name(), base, data)
 		}
 	}
 

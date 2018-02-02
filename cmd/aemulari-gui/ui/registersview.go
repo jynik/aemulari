@@ -5,12 +5,12 @@ import (
 
 	"github.com/jroimartin/gocui"
 
-	"../arch"
+	ae "../../../aemulari"
 )
 
 type RegInfo struct {
-	curr    []arch.RegisterValue
-	prev    []arch.RegisterValue
+	curr    []ae.RegisterValue
+	prev    []ae.RegisterValue
 	tainted bool // Track if register values may have chaned
 }
 
@@ -19,7 +19,7 @@ func (ui *Ui) updateRegView(view *gocui.View) error {
 
 	if len(ui.regs.curr) != 0 && ui.regs.tainted {
 		if len(ui.regs.curr) != len(ui.regs.prev) {
-			ui.regs.prev = make([]arch.RegisterValue, len(ui.regs.curr))
+			ui.regs.prev = make([]ae.RegisterValue, len(ui.regs.curr))
 		}
 
 		copy(ui.regs.prev, ui.regs.curr)
@@ -31,7 +31,7 @@ func (ui *Ui) updateRegView(view *gocui.View) error {
 	}
 
 	if len(ui.regs.prev) == 0 {
-		ui.regs.prev = make([]arch.RegisterValue, len(ui.regs.curr))
+		ui.regs.prev = make([]ae.RegisterValue, len(ui.regs.curr))
 		copy(ui.regs.prev, ui.regs.curr)
 	}
 

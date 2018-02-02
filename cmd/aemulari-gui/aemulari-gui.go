@@ -14,9 +14,9 @@ func main() {
 	var dbg *aemulari.Debugger
 	var err error
 
-	common.cmdline.InitCommonFlags()
+	common.InitCommonFlags()
 
-	cfg, err := common.cmdline.Parse()
+	cfg, err := common.Parse()
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)

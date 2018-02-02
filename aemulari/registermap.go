@@ -1,12 +1,10 @@
-package arch
+package aemulari
 
 import (
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/op/go-logging"
 )
 
 // Not actually backed by map because
@@ -14,8 +12,6 @@ type RegisterMap struct {
 	regList []*RegisterDef          // Sorted list of primary register names
 	regMap  map[string]*RegisterDef // Random access
 }
-
-var log = logging.MustGetLogger("")
 
 // Register definitions should be added in the desired display order.
 func (r *RegisterMap) add(names []string, reg *RegisterDef) {

@@ -10,8 +10,6 @@ import (
 	cs "github.com/bnagy/gapstone"
 	"github.com/op/go-logging"
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
-
-	"../arch"
 )
 
 // Top-level debugger object
@@ -27,9 +25,9 @@ type Debugger struct {
 
 // Debugger configuration
 type Config struct {
-	Arch    arch.Arch            // Architecture definition to use
-	RegDefs []arch.RegisterValue // Default register values
-	Mem     MemRegions           // Memory region configuration
+	Arch    Arch            // Architecture definition to use
+	RegDefs []RegisterValue // Default register values
+	Mem     MemRegions      // Memory region configuration
 }
 
 // Disassembly
@@ -53,7 +51,7 @@ func (d Disassembly) Equals(other Disassembly) bool {
 type exceptionInfo struct {
 	dbg  *Debugger
 	hook uc.Hook
-	last arch.Exception
+	last Exception
 }
 
 // Data used to implement stepping and breakpoints
@@ -66,7 +64,7 @@ type codeStep struct {
 	// Need to backup state prior to stopping emulator and restore it
 	// after we return from our execution. Unclear if this is necessitated
 	// due to a Unicorn defect, or our own misuse of the framework
-	regs []arch.RegisterValue
+	regs []RegisterValue
 }
 
 var log = logging.MustGetLogger("")
@@ -283,10 +281,10 @@ func (d *Debugger) Unmap(name string) error {
 	return ret
 }
 
-func (d *Debugger) Endianness() (arch.Endianness, error) {
+func (d *Debugger) Endianness() (Endianness, error) {
 	regs, err := d.ReadRegAll()
 	if err != nil {
-		return arch.LittleEndian, err
+		return LittleEndian, err
 	}
 
 	return d.cfg.Arch.Endianness(regs), nil
@@ -312,24 +310,24 @@ func (d *Debugger) pc() (uint64, error) {
 	panic("Failed to locate program counter")
 }
 
-func (d *Debugger) ReadRegAll() ([]arch.RegisterValue, error) {
+func (d *Debugger) ReadRegAll() ([]RegisterValue, error) {
 	var err error
 
 	regDefs := d.cfg.Arch.Registers()
-	regVals := make([]arch.RegisterValue, len(regDefs), len(regDefs))
+	regVals := make([]RegisterValue, len(regDefs), len(regDefs))
 
 	for i, reg := range regDefs {
 		regVals[i], err = d.ReadReg(reg)
 		if err != nil {
-			return []arch.RegisterValue{}, err
+			return []RegisterValue{}, err
 		}
 	}
 
 	return regVals, nil
 }
 
-func (d *Debugger) ReadReg(reg *arch.RegisterDef) (arch.RegisterValue, error) {
-	var rv arch.RegisterValue
+func (d *Debugger) ReadReg(reg *RegisterDef) (RegisterValue, error) {
+	var rv RegisterValue
 	var val uint64
 	var err error
 
@@ -342,8 +340,8 @@ func (d *Debugger) ReadReg(reg *arch.RegisterDef) (arch.RegisterValue, error) {
 	return rv, nil
 }
 
-func (d *Debugger) ReadRegByName(name string) (arch.RegisterValue, error) {
-	var rv arch.RegisterValue
+func (d *Debugger) ReadRegByName(name string) (RegisterValue, error) {
+	var rv RegisterValue
 	if reg, err := d.cfg.Arch.Register(name); err == nil {
 		return d.ReadReg(reg)
 	} else {
@@ -351,7 +349,7 @@ func (d *Debugger) ReadRegByName(name string) (arch.RegisterValue, error) {
 	}
 }
 
-func (d *Debugger) WriteReg(rv arch.RegisterValue) error {
+func (d *Debugger) WriteReg(rv RegisterValue) error {
 	if rv.Reg.IsProgramCounter() {
 		if regs, err := d.ReadRegAll(); err != nil {
 			return err
@@ -362,7 +360,7 @@ func (d *Debugger) WriteReg(rv arch.RegisterValue) error {
 	return d.mu.RegWrite(rv.Reg.Uc(), rv.Value)
 }
 
-func (d *Debugger) WriteRegs(rvs []arch.RegisterValue) error {
+func (d *Debugger) WriteRegs(rvs []RegisterValue) error {
 	for _, rv := range rvs {
 		if err := d.WriteReg(rv); err != nil {
 			return err
@@ -373,7 +371,7 @@ func (d *Debugger) WriteRegs(rvs []arch.RegisterValue) error {
 }
 
 func (d *Debugger) WriteRegByName(name string, value uint64) error {
-	var rv arch.RegisterValue
+	var rv RegisterValue
 	if reg, err := d.cfg.Arch.Register(name); err == nil {
 		rv.Reg = reg
 		rv.Value = value
@@ -393,10 +391,10 @@ func (d *Debugger) WriteMem(addr uint64, data []byte) error {
 
 // A negative count implies "Run until a breakpoint or exception"
 // Returns (hitException, intNumber, err)
-func (d *Debugger) Step(count int64) (arch.Exception, error) {
-	d.step.regs = []arch.RegisterValue{}
+func (d *Debugger) Step(count int64) (Exception, error) {
+	d.step.regs = []RegisterValue{}
 	d.step.count = count
-	d.exInfo.last = arch.Exception{}
+	d.exInfo.last = Exception{}
 
 	log.Debugf("Stepping %d instructions.", d.step.count)
 
@@ -413,10 +411,10 @@ func (d *Debugger) Step(count int64) (arch.Exception, error) {
 	return d.exInfo.last, d.WriteRegs(d.step.regs)
 }
 
-func (d *Debugger) Continue() (arch.Exception, error) {
-	d.step.regs = []arch.RegisterValue{}
+func (d *Debugger) Continue() (Exception, error) {
+	d.step.regs = []RegisterValue{}
 	d.step.count = -1
-	d.exInfo.last = arch.Exception{}
+	d.exInfo.last = Exception{}
 
 	pc, err := d.pc()
 	if err != nil {
