@@ -69,11 +69,6 @@ func (r *RegisterDef) Name() string {
 	return r.name
 }
 
-// Get the register's Unicorn identifier
-func (r *RegisterDef) Uc() int {
-	return r.uc
-}
-
 // Is this register the program counter?
 func (r *RegisterDef) IsProgramCounter() bool {
 	return r.pc

@@ -146,7 +146,7 @@ func (d *Debugger) init(cfg Config, reset bool) error {
 			}
 		}
 
-		if err := d.mu.RegWrite(r.Reg.Uc(), r.Value); err != nil {
+		if err := d.mu.RegWrite(r.Reg.uc, r.Value); err != nil {
 			return d.closeAll(err)
 		}
 	}
@@ -165,7 +165,7 @@ func (d *Debugger) init(cfg Config, reset bool) error {
 			return d.closeAll(err)
 		}
 
-		if err := d.mu.RegWrite(pc.Uc(), val); err != nil {
+		if err := d.mu.RegWrite(pc.uc, val); err != nil {
 			return d.closeAll(err)
 		}
 	}
@@ -331,7 +331,7 @@ func (d *Debugger) ReadReg(reg *RegisterDef) (RegisterValue, error) {
 	var val uint64
 	var err error
 
-	if val, err = d.mu.RegRead(reg.Uc()); err != nil {
+	if val, err = d.mu.RegRead(reg.uc); err != nil {
 		return rv, err
 	}
 
@@ -357,7 +357,7 @@ func (d *Debugger) WriteReg(rv RegisterValue) error {
 			rv.Value, err = d.cfg.Arch.CurrentPC(rv.Value, regs)
 		}
 	}
-	return d.mu.RegWrite(rv.Reg.Uc(), rv.Value)
+	return d.mu.RegWrite(rv.Reg.uc, rv.Value)
 }
 
 func (d *Debugger) WriteRegs(rvs []RegisterValue) error {
