@@ -6,49 +6,49 @@ import (
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
 )
 
-type Arm struct {
-	ArchBase
+type archArm struct {
+	archBase
 }
 
 // Defined per usercorn/qemu/target-arm/cpu.h
 const (
 	_             = iota
-	ARM_EXCP_UDEF // Undefined instruction
-	ARM_EXCP_SWI  // Software interrupt (SVC / SWI)
-	ARM_EXCP_PREFETCH_ABORT
-	ARM_EXCP_DATA_ABORT
-	ARM_EXCP_IRQ
-	ARM_EXCP_FIQ
-	ARM_EXCP_BKPT        // Software breakpoint (bkpt #imm)
-	ARM_EXCP_EXIT        // QEMU - intercept return from v7M exception
-	ARM_EXCP_KERNEL_TRAP // QEMU - intercept kernel commpage access
-	ARM_EXCP_STREX       // QEMU - intercept strex
-	ARM_EXCP_HYP_CALL    // Hypervisor call
-	ARM_EXCP_HYP_TRAP    // Hypervisor trap
-	ARM_EXCP_SMC         // Secure mode call
-	ARM_EXCP_VIRQ
-	ARM_EXCP_VFIQ
+	arm_excp_udef // Undefined instruction
+	arm_excp_swi  // Software interrupt (SVC / SWI)
+	arm_excp_prefetch_abort
+	arm_excp_data_abort
+	arm_excp_irq
+	arm_excp_fiq
+	arm_excp_bkpt        // Software breakpoint (bkpt #imm)
+	arm_excp_exit        // QEMU - intercept return from v7M exception
+	arm_excp_kernel_trap // QEMU - intercept kernel commpage access
+	arm_excp_strex       // QEMU - intercept strex
+	arm_excp_hyp_call    // Hypervisor call
+	arm_excp_hyp_trap    // Hypervisor trap
+	arm_excp_smc         // Secure mode call
+	arm_excp_virq
+	arm_excp_vfiq
 )
 
 /* Unicorn/QEMU ARM interrupt number to brief string description
  *		See unicorn/qemu/taget-arm/internals.h
  */
 var excpStr map[uint32]string = map[uint32]string{
-	ARM_EXCP_UDEF:           "Undefined Instruction",
-	ARM_EXCP_SWI:            "Software Interrupt",
-	ARM_EXCP_PREFETCH_ABORT: "Prefetch Abort",
-	ARM_EXCP_DATA_ABORT:     "Data Abort",
-	ARM_EXCP_IRQ:            "IRQ",
-	ARM_EXCP_FIQ:            "FIQ",
-	ARM_EXCP_BKPT:           "Breakpoint",
-	ARM_EXCP_EXIT:           "Emulator v7M exception exit",
-	ARM_EXCP_KERNEL_TRAP:    "Emulator interception of kernel commpage",
-	ARM_EXCP_STREX:          "Emulator interception of strex",
-	ARM_EXCP_HYP_CALL:       "Hypervisor Call",
-	ARM_EXCP_HYP_TRAP:       "Hypervisor Trap",
-	ARM_EXCP_SMC:            "Secure Monitor Call",
-	ARM_EXCP_VIRQ:           "Virtual IRQ",
-	ARM_EXCP_VFIQ:           "Virtual FIQ",
+	arm_excp_udef:           "Undefined Instruction",
+	arm_excp_swi:            "Software Interrupt",
+	arm_excp_prefetch_abort: "Prefetch Abort",
+	arm_excp_data_abort:     "Data Abort",
+	arm_excp_irq:            "IRQ",
+	arm_excp_fiq:            "FIQ",
+	arm_excp_bkpt:           "Breakpoint",
+	arm_excp_exit:           "Emulator v7M exception exit",
+	arm_excp_kernel_trap:    "Emulator interception of kernel commpage",
+	arm_excp_strex:          "Emulator interception of strex",
+	arm_excp_hyp_call:       "Hypervisor Call",
+	arm_excp_hyp_trap:       "Hypervisor Trap",
+	arm_excp_smc:            "Secure Monitor Call",
+	arm_excp_virq:           "Virtual IRQ",
+	arm_excp_vfiq:           "Virtual FIQ",
 }
 
 // Per: http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0473m/dom1359731136117.html
@@ -278,21 +278,21 @@ var arm_cpsr RegisterDef = RegisterDef{
 	},
 }
 
-func armConstructor(mode string) (Arch, error) {
-	var modeInfo Mode
+func armConstructor(mode string) (Architecture, error) {
+	var modeInfo processorMode
 
 	switch mode {
 	case "arm", "":
-		modeInfo = Mode{uc.MODE_ARM, cs.CS_MODE_ARM}
+		modeInfo = processorMode{uc.MODE_ARM, cs.CS_MODE_ARM}
 	case "thumb", "thumb2":
-		modeInfo = Mode{uc.MODE_THUMB, cs.CS_MODE_THUMB}
+		modeInfo = processorMode{uc.MODE_THUMB, cs.CS_MODE_THUMB}
 	default:
 		return nil, fmt.Errorf("Invalid Arm mode specified (\"%s\")", mode)
 	}
 
-	arm := &Arm{
-		ArchBase{
-			processor:   Type{uc.ARCH_ARM, cs.CS_ARCH_ARM},
+	arm := &archArm{
+		archBase{
+			processor:   processorType{uc.ARCH_ARM, cs.CS_ARCH_ARM},
 			mode:        modeInfo,
 			maxInstrLen: 4,
 		},
@@ -319,18 +319,18 @@ func armConstructor(mode string) (Arch, error) {
 	return arm, nil
 }
 
-func (a *Arm) InitialPC(pc uint64) (uint64, error) {
+func (a *archArm) initialPC(pc uint64) (uint64) {
 	switch a.mode.Uc {
 	case uc.MODE_ARM:
-		return pc, nil
+		return pc
 	case uc.MODE_THUMB:
-		return pc | 0x1, nil
+		return pc | 0x1
 	default:
 		panic("Unexpected processor mode in arm.InitialPC()")
 	}
 }
 
-func (a *Arm) CurrentPC(pc uint64, rvs []RegisterValue) (uint64, error) {
+func (a *archArm) currentPC(pc uint64, rvs []RegisterValue) uint64 {
 	for _, rv := range rvs {
 		if rv.Reg.name == "cpsr" {
 			// Test THUMB bit
@@ -338,14 +338,14 @@ func (a *Arm) CurrentPC(pc uint64, rvs []RegisterValue) (uint64, error) {
 				return pc | 0x1, nil
 			}
 
-			return pc, nil
+			return pc
 		}
 	}
 
 	panic("arm.CurrentPC() was not passed CPSR.")
 }
 
-func (a *Arm) Endianness(rvs []RegisterValue) Endianness {
+func (a *archArm) endianness(rvs []RegisterValue) Endianness {
 	for _, rv := range rvs {
 		if rv.Reg.name == "cpsr" {
 			// Test CPSR Endianness-bit
@@ -360,7 +360,7 @@ func (a *Arm) Endianness(rvs []RegisterValue) Endianness {
 	panic("arm.Endianness() was not passed CPSR.")
 }
 
-func (a *Arm) Exception(intno uint32, regs []RegisterValue, instr []byte) (ex Exception) {
+func (a *archArm) exception(intno uint32, regs []RegisterValue, instr []byte) (ex exception) {
 	// TODO: Check if we're in Thumb mode
 	thumb := false
 	havePc := false
@@ -384,7 +384,7 @@ func (a *Arm) Exception(intno uint32, regs []RegisterValue, instr []byte) (ex Ex
 	ex.intno = intno
 
 	switch intno {
-	case ARM_EXCP_BKPT:
+	case arm_excp_bkpt:
 		var bkpt uint
 		if thumb {
 			bkpt = uint(instr[0])

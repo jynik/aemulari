@@ -35,11 +35,11 @@ bin/aemulari-gui: ./cmd/aemulari-gui/aemulari-gui.go $(SRC) $(DEPS) bin
 	@touch $@
 
 test-asm:
-	make -C test-asm
+	$(MAKE) -C test-asm
 
 clean:
 	rm -rf bin
-	make -C test-asm clean
+	$(MAKE) -C test-asm clean
 
 realclean: clean
 	rm -rf .deps

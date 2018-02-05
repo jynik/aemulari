@@ -14,18 +14,18 @@ import (
 
 // Top-level debugger object
 type Debugger struct {
-	mu     uc.Unicorn
-	cs     cs.Engine
-	cfg    Config
-	mapped MemRegions
-	step   codeStep
-	bps    Breakpoints
+	arch   Architecture
+	mu     uc.Unicorn		// Unicorn emulator handle
+	cs     cs.Engine		// Capstone disassembly engine handle
+	cfg    Config			// Configuration settings
+	mapped MemRegions		// Mapped memory regions
+	step   codeStep			// Code stepping metadata
+	bps    Breakpoints		// Breakpoint settings
 	exInfo exceptionInfo // CPU Exception handling
 }
 
 // Debugger configuration
 type Config struct {
-	Arch    Arch            // Architecture definition to use
 	RegDefs []RegisterValue // Default register values
 	Mem     MemRegions      // Memory region configuration
 }
@@ -47,11 +47,11 @@ func (d Disassembly) Equals(other Disassembly) bool {
 		d.Operands == other.Operands
 }
 
-// Exception handling
+// Exception callback handling
 type exceptionInfo struct {
 	dbg  *Debugger
 	hook uc.Hook
-	last Exception
+	last exception // Most recently occurring exception
 }
 
 // Data used to implement stepping and breakpoints
@@ -70,10 +70,10 @@ type codeStep struct {
 var log = logging.MustGetLogger("")
 
 // Instantiate and configure a new Debugger
-func NewDebugger(c Config) (*Debugger, error) {
+func NewDebugger(a, Architecture, c Config) (*Debugger, error) {
 	var d Debugger
 
-	if err := d.init(c, false); err != nil {
+	if err := d.init(a, c, false); err != nil {
 		return nil, err
 	}
 
@@ -96,25 +96,26 @@ func (d *Debugger) Reset() error {
 	return d.init(newConfig, true)
 }
 
-func (d *Debugger) init(cfg Config, reset bool) error {
+func (d *Debugger) init(arch Architecture, cfg Config, reset bool) error {
 	var err error
 
 	d.cfg = cfg
+	d.arch = arch
 
-	archType := d.cfg.Arch.Type()
-	archMode := d.cfg.Arch.InitialMode()
+	archType := arch.Type()
+	archMode := arch.InitialMode()
 
 	// Keep existing breakpoints if we're resetting the debugger
 	if !reset {
 		d.bps.Initialize()
 	}
 
-	d.mu, err = uc.NewUnicorn(archType.Uc, archMode.Uc)
+	d.mu, err = uc.NewUnicorn(archType.uc, archMode.uc)
 	if err != nil {
 		return err
 	}
 
-	d.cs, err = cs.New(archType.Cs, archMode.Cs)
+	d.cs, err = cs.New(archType.cs, archMode.cs)
 	if err != nil {
 		d.mu.Close()
 		return err

@@ -3,7 +3,6 @@ package aemulari
 import (
 	"fmt"
 	"regexp"
-	"strings"
 )
 
 type Endianness int
@@ -13,69 +12,63 @@ const (
 	LittleEndian
 )
 
-type Type struct {
-	Uc int
-	Cs int
+// Processor type ID
+type processorType struct {
+	uc int	// Unicorn ID for processor type
+	cs int  // Capstone ID for processor type
 }
 
-type Mode struct {
-	Uc int
-	Cs uint
+// Processor mode ID
+type processorMode struct {
+	uc int	// Unicorn ID for the initial mode
+	cs uint // Capstone ID for for the initial mode
 }
 
-type Exception struct {
+// Processor exception
+type exception struct {
 	intno uint32 // Interrupt/Exception number
-	pc    uint64 // Address at which exception ocurred
+	pc    uint64 // Address at which exception occurred
 	desc  string // Printable string describing the exception
 }
 
-func (e *Exception) String() string {
-	return e.desc
-}
-
-func (e *Exception) Occurred() bool {
+// Tests if exception metadata indicates that an exception has been recorded
+func (e *exceptionInfo) Occurred() bool {
 	return e.desc != ""
 }
 
-// args form a single string in the form: arch[:mode]
-type archConstructor func(args string) (Arch, error)
+type archConstructor func(mode string) (Architecture, error)
 
-type Arch interface {
-	// Return the processor's architecture type
-	Type() Type
+type archBase struct {
+	processor processorType
+	mode	  processorMode
+	maxInstrLen uint
+	RegisterMap
+}
 
-	// Return the initial processor mode
-	InitialMode() Mode
+type Architecture interface {
 
-	// Adjust, if neccessary (e.g., based upon mode or alignment), and return
-	// the initial PC value.  For example, we'll need to set the LSB for ARM
-	// THUMB mode. Report errors if a provided PC value is invalid.
-	InitialPC(pc uint64) (uint64, error)
+	// Adjust, if necessary (e.g., based upon mode or alignment), and return
+	// the initial PC value.
+	initialPC(pc uint64) uint64
 
-	// Adjust current PC, if neccessary.  This allows architecture-specifics
-	// (e.g., mode denoted in status reguster) to be considered before
-	// (re)starting the emulator. Returns error on invalid value.
-	CurrentPC(pc uint64, regs []RegisterValue) (uint64, error)
+	// Adjust current PC, if necessary.  This allows architecture-specific
+	// information (e.g., current mode denoted by status register) to be
+	// considered before passing the PC the emulator when (re)starting it.
+	currentPC(pc uint64, regs []RegisterValue) uint64
 
-	/* Return the max size of an instruction, in bytes */
-	MaxInstrLen() uint
+	// Determine current data endianess.
+	// The `regs` parameter should contain the current state of registers.
+	// Returns BigEndian or LittleEndian
+	endianness(regs []RegisterValue) Endianness
 
-	/* Determine current data endianess.
-	 * The `regs` parameter should contain the current state of registers.
-	 * Returns BigEndian or LittleEndian
-	 */
-	Endianness(regs []RegisterValue) Endianness
-
-	/* Create an Exception with a descriptive String() output
-	 *
-	 * Parameters:
-	 *	intno	Exception/Interrupt number
-	 *	regs	Current state of registers
-	 *	instr	Instruction that generated exception
-	 *
-	 * Returns a string describing the exception
-	 */
-	Exception(intno uint32, regs []RegisterValue, instr []byte) Exception
+	// Create an Exception with a descriptive String() output
+	// FIXME this looks outdated
+	//
+	//	intno	Exception/Interrupt number
+	//	regs	Current state of registers
+	//	instr	Instruction that generated exception
+	//
+	exception(intno uint32, regs []RegisterValue, instr []byte) exceptionInfo
 
 	/* Parse a string and return a RegisterValue.
 	 * Expected form: <reg name>=<value>
@@ -90,7 +83,8 @@ type Arch interface {
 	 * Returns a pointer to a register definition on success,
 	 * or a non-nil error on failure.
 	 */
-	Register(name string) (*RegisterDef, error)
+	// FIXME - not needed?
+	//register(name string) (*RegisterDef, error)
 
 	/*
 	 * Return a Regular Expression for matching register names and aliases
@@ -101,27 +95,15 @@ type Arch interface {
 	Registers() []*RegisterDef
 }
 
-// Create a new Arch instance matching the architecture and mode
-// specified by "arch[:mode]"
-func New(args string) (Arch, error) {
-	var arch, mode string
-
-	args = strings.Trim(args, "\r\n\t ")
-	args = strings.ToLower(args)
-
-	argv := strings.Split(args, ":")
-	arch = argv[0]
-
-	if len(argv) > 1 {
-		mode = argv[1]
-	} else {
-		mode = ""
-	}
-
-	if newArch, found := archMap[arch]; !found {
+// Obtain an implementation of the Architecture interface for
+// the specified architecture type (`arch`). The `initialMode`
+// may be used to set the initial mode of the processor, or can
+// be left empty to use the default.
+func NewArchitecture(arch, initialMode string) (Architechture, error) {
+	if ret, found := archMap[arch]; !found {
 		return nil, fmt.Errorf("Unsupported architecture: %s", arch)
 	} else {
-		return newArch(mode)
+		return ret(initialMode)
 	}
 }
 
