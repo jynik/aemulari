@@ -16,13 +16,13 @@ func main() {
 
 	common.InitCommonFlags()
 
-	cfg, err := common.Parse()
+	arch, cfg, err := common.Parse()
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)
 	}
 
-	dbg, err = aemulari.NewDebugger(cfg)
+	dbg, err = aemulari.NewDebugger(arch, cfg)
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)

@@ -30,9 +30,8 @@ const (
 	arm_excp_vfiq
 )
 
-/* Unicorn/QEMU ARM interrupt number to brief string description
- *		See unicorn/qemu/taget-arm/internals.h
- */
+// Unicorn/QEMU ARM interrupt number to brief string description
+//		See unicorn/qemu/taget-arm/internals.h
 var excpStr map[uint32]string = map[uint32]string{
 	arm_excp_udef:           "Undefined Instruction",
 	arm_excp_swi:            "Software Interrupt",
@@ -319,8 +318,8 @@ func armConstructor(mode string) (Architecture, error) {
 	return arm, nil
 }
 
-func (a *archArm) initialPC(pc uint64) (uint64) {
-	switch a.mode.Uc {
+func (a *archArm) initialPC(pc uint64) uint64 {
+	switch a.mode.uc {
 	case uc.MODE_ARM:
 		return pc
 	case uc.MODE_THUMB:
@@ -335,7 +334,7 @@ func (a *archArm) currentPC(pc uint64, rvs []RegisterValue) uint64 {
 		if rv.Reg.name == "cpsr" {
 			// Test THUMB bit
 			if (rv.Value & (1 << 5)) != 0 {
-				return pc | 0x1, nil
+				return pc | 0x1
 			}
 
 			return pc
@@ -360,7 +359,9 @@ func (a *archArm) endianness(rvs []RegisterValue) Endianness {
 	panic("arm.Endianness() was not passed CPSR.")
 }
 
-func (a *archArm) exception(intno uint32, regs []RegisterValue, instr []byte) (ex exception) {
+func (a *archArm) exception(intno uint32, regs []RegisterValue, instr []byte) Exception {
+	var e Exception
+
 	// TODO: Check if we're in Thumb mode
 	thumb := false
 	havePc := false
@@ -372,7 +373,7 @@ func (a *archArm) exception(intno uint32, regs []RegisterValue, instr []byte) (e
 	for _, r := range regs {
 		if r.Reg.Name() == "pc" {
 			havePc = true
-			ex.pc = r.Value
+			e.pc = r.Value
 			break
 		}
 	}
@@ -381,7 +382,7 @@ func (a *archArm) exception(intno uint32, regs []RegisterValue, instr []byte) (e
 		panic("pc was not in the register set provided to Arm.Exception()")
 	}
 
-	ex.intno = intno
+	e.intno = intno
 
 	switch intno {
 	case arm_excp_bkpt:
@@ -391,15 +392,15 @@ func (a *archArm) exception(intno uint32, regs []RegisterValue, instr []byte) (e
 		} else {
 			bkpt = (uint(instr[2]&0xf) << 12) | (uint(instr[1]) << 4) | uint(instr[0]&0xf)
 		}
-		ex.desc = fmt.Sprintf("%s #0x%04x (%d)", excpStr[intno], bkpt, bkpt)
+		e.desc = fmt.Sprintf("%s #0x%04x (%d)", excpStr[intno], bkpt, bkpt)
 
 	default:
 		if str, found := excpStr[intno]; found {
-			ex.desc = str
+			e.desc = str
 		} else {
-			ex.desc = fmt.Sprintf("Unknown exception (%d) occurred at pc=0x%08x", intno, ex.pc)
+			e.desc = fmt.Sprintf("Unknown exception (%d) occurred at pc=0x%08x", intno, e.pc)
 		}
 	}
 
-	return ex
+	return e
 }

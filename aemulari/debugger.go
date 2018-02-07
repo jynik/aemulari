@@ -15,12 +15,12 @@ import (
 // Top-level debugger object
 type Debugger struct {
 	arch   Architecture
-	mu     uc.Unicorn		// Unicorn emulator handle
-	cs     cs.Engine		// Capstone disassembly engine handle
-	cfg    Config			// Configuration settings
-	mapped MemRegions		// Mapped memory regions
-	step   codeStep			// Code stepping metadata
-	bps    Breakpoints		// Breakpoint settings
+	mu     uc.Unicorn    // Unicorn emulator handle
+	cs     cs.Engine     // Capstone disassembly engine handle
+	cfg    Config        // Configuration settings
+	mapped MemRegions    // Mapped memory regions
+	step   codeStep      // Code stepping metadata
+	bps    Breakpoints   // Breakpoint settings
 	exInfo exceptionInfo // CPU Exception handling
 }
 
@@ -51,7 +51,7 @@ func (d Disassembly) Equals(other Disassembly) bool {
 type exceptionInfo struct {
 	dbg  *Debugger
 	hook uc.Hook
-	last exception // Most recently occurring exception
+	last Exception // Most recently occurring exception
 }
 
 // Data used to implement stepping and breakpoints
@@ -70,7 +70,7 @@ type codeStep struct {
 var log = logging.MustGetLogger("")
 
 // Instantiate and configure a new Debugger
-func NewDebugger(a, Architecture, c Config) (*Debugger, error) {
+func NewDebugger(a Architecture, c Config) (*Debugger, error) {
 	var d Debugger
 
 	if err := d.init(a, c, false); err != nil {
@@ -93,7 +93,7 @@ func (d *Debugger) Reset() error {
 	newConfig := d.cfg
 	newConfig.Mem = d.mapped
 
-	return d.init(newConfig, true)
+	return d.init(d.arch, newConfig, true)
 }
 
 func (d *Debugger) init(arch Architecture, cfg Config, reset bool) error {
@@ -102,20 +102,17 @@ func (d *Debugger) init(arch Architecture, cfg Config, reset bool) error {
 	d.cfg = cfg
 	d.arch = arch
 
-	archType := arch.Type()
-	archMode := arch.InitialMode()
-
 	// Keep existing breakpoints if we're resetting the debugger
 	if !reset {
 		d.bps.Initialize()
 	}
 
-	d.mu, err = uc.NewUnicorn(archType.uc, archMode.uc)
+	d.mu, err = uc.NewUnicorn(d.arch.id().uc, d.arch.initialMode().uc)
 	if err != nil {
 		return err
 	}
 
-	d.cs, err = cs.New(archType.cs, archMode.cs)
+	d.cs, err = cs.New(d.arch.id().cs, d.arch.initialMode().cs)
 	if err != nil {
 		d.mu.Close()
 		return err
@@ -141,10 +138,7 @@ func (d *Debugger) init(arch Architecture, cfg Config, reset bool) error {
 		log.Debugf("Loading %s", r)
 		if r.Reg.IsProgramCounter() {
 			loadedPc = true
-			r.Value, err = d.cfg.Arch.InitialPC(r.Value)
-			if err != nil {
-				return d.closeAll(err)
-			}
+			r.Value = d.arch.initialPC(r.Value)
 		}
 
 		if err := d.mu.RegWrite(r.Reg.uc, r.Value); err != nil {
@@ -157,16 +151,13 @@ func (d *Debugger) init(arch Architecture, cfg Config, reset bool) error {
 	if !loadedPc {
 		codeMem := d.code()
 
-		pc, err := d.cfg.Arch.Register("pc")
+		pc, err := d.arch.register("pc")
 		if err != nil {
 			return d.closeAll(err)
 		}
-		val, err := d.cfg.Arch.InitialPC(codeMem.base)
-		if err != nil {
-			return d.closeAll(err)
-		}
+		pcVal := d.arch.initialPC(codeMem.base)
 
-		if err := d.mu.RegWrite(pc.uc, val); err != nil {
+		if err := d.mu.RegWrite(pc.uc, pcVal); err != nil {
 			return d.closeAll(err)
 		}
 	}
@@ -288,7 +279,7 @@ func (d *Debugger) Endianness() (Endianness, error) {
 		return LittleEndian, err
 	}
 
-	return d.cfg.Arch.Endianness(regs), nil
+	return d.arch.endianness(regs), nil
 }
 
 func (d *Debugger) pc() (uint64, error) {
@@ -299,11 +290,7 @@ func (d *Debugger) pc() (uint64, error) {
 
 	for _, reg := range regs {
 		if reg.Reg.IsProgramCounter() {
-			pc, err := d.cfg.Arch.CurrentPC(reg.Value, regs)
-			if err != nil {
-				return 0xdeadbeefdeadbeef, err
-			}
-
+			pc := d.arch.currentPC(reg.Value, regs)
 			return pc, nil
 		}
 	}
@@ -314,7 +301,7 @@ func (d *Debugger) pc() (uint64, error) {
 func (d *Debugger) ReadRegAll() ([]RegisterValue, error) {
 	var err error
 
-	regDefs := d.cfg.Arch.Registers()
+	regDefs := d.arch.Registers()
 	regVals := make([]RegisterValue, len(regDefs), len(regDefs))
 
 	for i, reg := range regDefs {
@@ -343,7 +330,7 @@ func (d *Debugger) ReadReg(reg *RegisterDef) (RegisterValue, error) {
 
 func (d *Debugger) ReadRegByName(name string) (RegisterValue, error) {
 	var rv RegisterValue
-	if reg, err := d.cfg.Arch.Register(name); err == nil {
+	if reg, err := d.arch.register(name); err == nil {
 		return d.ReadReg(reg)
 	} else {
 		return rv, err
@@ -355,7 +342,7 @@ func (d *Debugger) WriteReg(rv RegisterValue) error {
 		if regs, err := d.ReadRegAll(); err != nil {
 			return err
 		} else {
-			rv.Value, err = d.cfg.Arch.CurrentPC(rv.Value, regs)
+			rv.Value = d.arch.currentPC(rv.Value, regs)
 		}
 	}
 	return d.mu.RegWrite(rv.Reg.uc, rv.Value)
@@ -373,7 +360,7 @@ func (d *Debugger) WriteRegs(rvs []RegisterValue) error {
 
 func (d *Debugger) WriteRegByName(name string, value uint64) error {
 	var rv RegisterValue
-	if reg, err := d.cfg.Arch.Register(name); err == nil {
+	if reg, err := d.arch.register(name); err == nil {
 		rv.Reg = reg
 		rv.Value = value
 		return d.WriteReg(rv)
@@ -465,7 +452,7 @@ func (e *exceptionInfo) cb(mu uc.Unicorn, intno uint32) {
 	var instr []byte
 
 	d := e.dbg
-	instrLen := d.cfg.Arch.MaxInstrLen()
+	instrLen := d.arch.maxInstructionSize()
 
 	d.mu.Stop()
 
@@ -486,7 +473,7 @@ func (e *exceptionInfo) cb(mu uc.Unicorn, intno uint32) {
 		panic("Failed to read current instruction in interrupt callback.")
 	}
 
-	d.exInfo.last = d.cfg.Arch.Exception(intno, regs, instr)
+	d.exInfo.last = d.arch.exception(intno, regs, instr)
 }
 
 // Disassemble `count` instructions, starting at PC
@@ -501,8 +488,7 @@ func (d *Debugger) Disassemble(count uint64) ([]Disassembly, error) {
 func (d *Debugger) DisassembleAt(addr uint64, count uint64) ([]Disassembly, error) {
 	var ret []Disassembly
 
-	// FIXME integer overflow
-	len := count * uint64(d.cfg.Arch.MaxInstrLen())
+	len := count * uint64(d.arch.maxInstructionSize())
 
 	if code, err := d.ReadMem(addr, len); err != nil {
 		return ret, nil
@@ -549,5 +535,5 @@ func (d *Debugger) GetBreakpointsAt(addr uint64) BreakpointList {
 
 // Returns a *Regexp for matching register names and aliases
 func (d *Debugger) RegisterRegexp() *regexp.Regexp {
-	return d.cfg.Arch.RegisterRegexp()
+	return d.arch.RegisterRegexp()
 }

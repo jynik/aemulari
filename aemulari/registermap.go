@@ -26,7 +26,7 @@ func (r *RegisterMap) add(names []string, reg *RegisterDef) {
 	}
 }
 
-func (rm *RegisterMap) Register(name string) (*RegisterDef, error) {
+func (rm *RegisterMap) register(name string) (*RegisterDef, error) {
 	if reg, found := rm.regMap[name]; found {
 		return reg, nil
 	}
@@ -64,7 +64,7 @@ func (rm *RegisterMap) ParseRegister(s string) (RegisterValue, error) {
 		return rv, err
 	}
 
-	if reg, err := rm.Register(fields[0]); err == nil {
+	if reg, err := rm.register(fields[0]); err == nil {
 		rv.Value = reg.mask & val
 		rv.Reg = reg
 		return rv, nil

@@ -29,7 +29,6 @@ var args cmdlineArgs
 var log = logging.MustGetLogger("")
 
 func handleVerbosity(cfg *ae.Config) error {
-
 	args.verbosity = strings.ToLower(strings.Trim(args.verbosity, "\r\n\t "))
 	if args.verbosity == "critical" {
 		logging.SetLevel(logging.CRITICAL, "")
@@ -50,10 +49,23 @@ func handleVerbosity(cfg *ae.Config) error {
 	return nil
 }
 
-func handleArch(cfg *ae.Config) error {
-	var err error
-	cfg.Arch, err = ae.New(args.arch)
-	return err
+func handleArchitecture(cfg *ae.Config) (ae.Architecture, error) {
+	fields := strings.Split(args.arch, ":")
+
+	arch := fields[0]
+	mode := ""
+
+	if len(fields) >= 2 {
+		mode = fields[1]
+	}
+
+	ret, err := ae.NewArchitecture(arch, mode)
+	if err != nil {
+		return ret, err
+	}
+
+	cfg.RegDefs, err = ret.ParseRegisters(args.regDefs)
+	return ret, err
 }
 
 func handleMem(cfg *ae.Config) error {
@@ -69,12 +81,6 @@ func handleMem(cfg *ae.Config) error {
 	return err
 }
 
-func handleRegDefs(cfg *ae.Config) error {
-	var err error
-	cfg.RegDefs, err = cfg.Arch.ParseRegisters(args.regDefs)
-	return err
-}
-
 func InitCommonFlags() {
 	flag.StringVar(&args.verbosity, "v", "warning", "Logging verbosity.")
 	flag.StringVar(&args.arch, "a", "arm", "Target architecture.")
@@ -82,25 +88,26 @@ func InitCommonFlags() {
 	flag.Var(&args.regDefs, "r", "Set initial register value.")
 }
 
-func Parse() (ae.Config, error) {
+func Parse() (ae.Architecture, ae.Config, error) {
 	var cfg ae.Config
+	var arch ae.Architecture
+	var err error
 
 	args.mem = make(ae.MemRegions)
 
 	flag.Parse()
 
-	if err := handleVerbosity(&cfg); err != nil {
-		return cfg, err
-	}
-	if err := handleArch(&cfg); err != nil {
-		return cfg, err
-	}
-	if err := handleMem(&cfg); err != nil {
-		return cfg, err
-	}
-	if err := handleRegDefs(&cfg); err != nil {
-		return cfg, err
+	if arch, err = handleArchitecture(&cfg); err != nil {
+		return arch, cfg, err
 	}
 
-	return cfg, nil
+	if err := handleVerbosity(&cfg); err != nil {
+		return arch, cfg, err
+	}
+
+	if err = handleMem(&cfg); err != nil {
+		return arch, cfg, err
+	}
+
+	return arch, cfg, nil
 }

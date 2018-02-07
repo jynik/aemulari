@@ -1,9 +1,9 @@
 all: arm
 
 arm:
-	make -C arm
+	$(MAKE) -C arm
 
 clean:
-	make -C arm clean
+	$(MAKE) -C arm clean
 
 .PHONY: arm clean

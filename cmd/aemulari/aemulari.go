@@ -62,13 +62,13 @@ func main() {
 	common.InitCommonFlags()
 	initFlags(&flags)
 
-	cfg, err := common.Parse()
+	arch, cfg, err := common.Parse()
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
-	dbg, err := ae.NewDebugger(cfg)
+	dbg, err := ae.NewDebugger(arch, cfg)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
