@@ -5,8 +5,10 @@ import (
 	"fmt"
 )
 
+// A set MemRegion structures that may be accessed by name
 type MemRegions map[string]MemRegion
 
+// Returns a newline-delimited list of memory region strings
 func (regions MemRegions) String() string {
 	var buf bytes.Buffer
 
@@ -37,6 +39,7 @@ func (regions *MemRegions) Set(s string) error {
 	return regions.Add(m)
 }
 
+// Add a memory region to the mapping
 func (regions *MemRegions) Add(m MemRegion) error {
 	if regions.Contains(m.name) {
 		return fmt.Errorf("A region named \"%s\" has already been created.", m.name)
@@ -46,14 +49,16 @@ func (regions *MemRegions) Add(m MemRegion) error {
 	return nil
 }
 
-func (regions MemRegions) Get(s string) (MemRegion, error) {
-	m := regions[s]
+// Retrieve the memory region named `name`
+func (regions MemRegions) Get(name string) (MemRegion, error) {
+	m := regions[name]
 	if m.IsZero() {
-		return m, fmt.Errorf("Memory region \"%s\" does not exist.", s)
+		return m, fmt.Errorf("Memory region \"%s\" does not exist.", name)
 	}
 	return m, nil
 }
 
+// Remove the memory region named `name`
 func (regions *MemRegions) Remove(name string) {
 	delete(*regions, name)
 }

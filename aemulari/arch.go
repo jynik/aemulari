@@ -5,13 +5,6 @@ import (
 	"regexp"
 )
 
-type Endianness int
-
-const (
-	BigEndian = iota
-	LittleEndian
-)
-
 // Processor type ID
 type processorType struct {
 	uc int // Unicorn ID for processor type
