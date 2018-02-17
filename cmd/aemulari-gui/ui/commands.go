@@ -242,7 +242,7 @@ func cmdBreak(ui *Ui, cmd cmd, args []string) (string, error) {
 	bp := ui.dbg.SetBreakpoint(addr)
 
 	// FIXME use dbg-supplied address format
-	return fmt.Sprintf("Added breakpoint %d at 0x%08x", bp.Id, bp.Address), nil
+	return fmt.Sprintf("Added breakpoint %d at 0x%08x", bp.ID, bp.Address), nil
 }
 
 func cmdContinue(ui *Ui, cmd cmd, args []string) (string, error) {

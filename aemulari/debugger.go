@@ -19,7 +19,7 @@ type Debugger struct {
 	cfg    Config        // Configuration settings
 	mapped MemRegions    // Mapped memory regions
 	step   codeStep      // Code stepping metadata
-	bps    Breakpoints   // Breakpoint settings
+	bps    breakpoints   // Breakpoint settings
 	exInfo exceptionInfo // CPU Exception handling
 }
 
@@ -103,7 +103,7 @@ func (d *Debugger) init(arch Architecture, cfg Config, reset bool) error {
 
 	// Keep existing breakpoints if we're resetting the debugger
 	if !reset {
-		d.bps.Initialize()
+		d.bps.initialize()
 	}
 
 	d.mu, err = uc.NewUnicorn(d.arch.id().uc, d.arch.initialMode().uc)
@@ -421,7 +421,7 @@ func (h *codeStep) cb(mu uc.Unicorn, addr uint64, size uint32) {
 
 	log.Debugf("Code step hook @ 0x%08x (%d), countdown=%d", addr, size, d.step.count)
 
-	breakpointTriggered := d.bps.Process(addr)
+	breakpointTriggered := d.bps.process(addr)
 	if breakpointTriggered {
 		log.Debugf("Breakpoint triggered @ 0x%08x", addr)
 	}
@@ -509,25 +509,25 @@ func (d *Debugger) DisassembleAt(addr uint64, count uint64) ([]Disassembly, erro
 }
 
 func (d *Debugger) SetBreakpoint(addr uint64) Breakpoint {
-	return d.bps.Add(addr)
+	return d.bps.add(addr)
 }
 
 func (d *Debugger) DeleteAllBreakpoints() {
-	d.bps.RemoveAll()
+	d.bps.removeAll()
 }
 
 func (d *Debugger) DeleteBreakpointsAt(addr uint64) {
-	d.bps.RemoveAllAt(addr)
+	d.bps.removeAllAt(addr)
 }
 
 func (d *Debugger) DeleteBreakpoint(id int) {
-	d.bps.Remove(id)
+	d.bps.remove(id)
 }
 
 func (d *Debugger) GetBreakpoints() BreakpointList {
-	return d.bps.Get()
+	return d.bps.get()
 }
 
 func (d *Debugger) GetBreakpointsAt(addr uint64) BreakpointList {
-	return d.bps.GetAt(addr)
+	return d.bps.getAllAt(addr)
 }
