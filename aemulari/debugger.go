@@ -11,7 +11,8 @@ import (
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
 )
 
-// Top-level debugger object
+// A Debugger, after being created via NewDebugger(), may be used to
+// execute (via emulation) and inspect a program.
 type Debugger struct {
 	arch   Architecture
 	mu     uc.Unicorn     // Unicorn emulator handle
@@ -29,7 +30,7 @@ type DebuggerConfig struct {
 	Mem     MemRegions      // Memory region configuration
 }
 
-// A single disassembled instruction
+// A single disassembled instruction separated into its components
 type Disassembly struct {
 	AddressU64 uint64		// Address of the instruction, as a uint64
 	Address    string		// Address of the instruction, as a string
@@ -38,7 +39,8 @@ type Disassembly struct {
 	Operands   string		// String representation of the instruction operands
 }
 
-// Returns true if two instructions are equals, and false otherwise
+// Returns true if two instructions are the same, and false otherwise.
+// Note that this implies exactly the same, not just semantically the same.
 func (d Disassembly) Equals(other Disassembly) bool {
 	return d.AddressU64 == other.AddressU64 &&
 		d.Address == other.Address &&
@@ -69,7 +71,7 @@ type codeStep struct {
 
 var log = logging.MustGetLogger("")
 
-// Instantiate and configure a new Debugger
+// Create a Debugger using the provided Architecture and DebuggerConfig.
 func NewDebugger(a Architecture, c DebuggerConfig) (*Debugger, error) {
 	var d Debugger
 
@@ -80,20 +82,43 @@ func NewDebugger(a Architecture, c DebuggerConfig) (*Debugger, error) {
 	return &d, nil
 }
 
-func (d *Debugger) Reset() error {
+// Reset the debugger to its original state. If `keepMappings` is true,
+// the current state of memory mappyings will be retained. This is often
+// useful if mappings have been added over the course of debugging.
+//
+// Otherwise, if `keepMappings` is false, existing memory mappings will be
+// unmapped, writing memory contents to any configured output files. Then,
+// mappings will be re-initialized based upon the configuration specified in
+// the DebugConfiguration provided when the Debugger was created.
+func (d *Debugger) Reset(keepMappings bool) error {
+	var err, firstError error
 	d.mu.Close()
 	d.cs.Close()
 
-	/* Reset to original configuration, but keep memory mappings
-	 * This is intended to allow us to map regions as we discover they're
-	 * necessary, and not have to re-do that with each reset.
-	 *
-	 * TODO: Make this an opt-out configuration item?
-	 */
+	// Reset to original configuration, but keep memory mappings
+	// This is intended to allow us to map regions as we discover they're
+	// necessary, and not have to re-do that with each reset.
 	newConfig := d.cfg
-	newConfig.Mem = d.mapped
+	if keepMappings {
+		newConfig.Mem = d.mapped
+	} else {
+		for _, r := range d.mapped {
+			// Don't treat the error as fatal; allow the reset to complete
+			err := d.Unmap(r.name)
+			if err != nil && firstError == nil {
+				firstError = err
+			}
+		}
+	}
 
-	return d.init(d.arch, newConfig, true)
+	err = d.init(d.arch, newConfig, true)
+	if err != nil {
+		if firstError == nil {
+			return err
+		}
+	}
+
+	return firstError
 }
 
 func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error {
@@ -180,7 +205,8 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 	return nil
 }
 
-// Deinitialize Debugger and write any requested output files
+// Deinitialize a Debugger and unmap memory regions, writing their contents
+// to output files if configured to do so.
 func (d *Debugger) Close() error {
 	var ret error = nil
 
@@ -208,6 +234,11 @@ func (d *Debugger) code() MemRegion {
 	}
 }
 
+// Map a memory region described by `toMap`. If the MemRegion's `inputFile`
+// field is non-empty, the contents of the associated file will be used to
+// initialize the region. If the MemRegion's `outputFile` field is non-empty,
+// the contents of memory will be written to this file when unmapped by a call
+// to Debugger.Unmap(), or Debugger.Reset(false).
 func (d *Debugger) Map(toMap MemRegion) error {
 	var prot int
 
@@ -246,6 +277,9 @@ func (d *Debugger) Map(toMap MemRegion) error {
 	return nil
 }
 
+// Unmapped the memory region named `name`. If the `outputFile` field specified when
+// the region was mapped was non-empty, the contents of the memory will be written
+// to this file.
 func (d *Debugger) Unmap(name string) error {
 	var m MemRegion
 	var err error
@@ -273,6 +307,7 @@ func (d *Debugger) Unmap(name string) error {
 	return ret
 }
 
+// Retrieve the emulated processor's current Endianness.
 func (d *Debugger) Endianness() (Endianness, error) {
 	regs, err := d.ReadRegAll()
 	if err != nil {
@@ -282,6 +317,7 @@ func (d *Debugger) Endianness() (Endianness, error) {
 	return d.arch.endianness(regs), nil
 }
 
+// Retrieve the current program counter value.
 func (d *Debugger) pc() (uint64, error) {
 	regs, err := d.ReadRegAll()
 	if err != nil {
@@ -298,6 +334,7 @@ func (d *Debugger) pc() (uint64, error) {
 	panic("Failed to locate program counter")
 }
 
+// Retrieve the current state all registers.
 func (d *Debugger) ReadRegAll() ([]RegisterValue, error) {
 	var err error
 
@@ -305,7 +342,7 @@ func (d *Debugger) ReadRegAll() ([]RegisterValue, error) {
 	regVals := make([]RegisterValue, len(regDefs), len(regDefs))
 
 	for i, reg := range regDefs {
-		regVals[i], err = d.ReadReg(reg)
+		regVals[i], err = d.readReg(reg)
 		if err != nil {
 			return []RegisterValue{}, err
 		}
@@ -314,7 +351,8 @@ func (d *Debugger) ReadRegAll() ([]RegisterValue, error) {
 	return regVals, nil
 }
 
-func (d *Debugger) ReadReg(reg *RegisterDef) (RegisterValue, error) {
+// Retrieve the current state of the register described by `reg`.
+func (d *Debugger) readReg(reg *RegisterDef) (RegisterValue, error) {
 	var rv RegisterValue
 	var val uint64
 	var err error
@@ -328,15 +366,27 @@ func (d *Debugger) ReadReg(reg *RegisterDef) (RegisterValue, error) {
 	return rv, nil
 }
 
+// Read a register and update the its value in the provided RegisterValue
+func (d *Debugger) ReadReg(rv *RegisterValue) error {
+	reg, err := d.readReg(rv.Reg)
+	if err != nil {
+		return err
+	}
+	rv.Value = reg.Value
+	return nil
+}
+
+// Retrieve the current state of a register, specified by its name
 func (d *Debugger) ReadRegByName(name string) (RegisterValue, error) {
 	var rv RegisterValue
 	if reg, err := d.arch.register(name); err == nil {
-		return d.ReadReg(reg)
+		return d.readReg(reg)
 	} else {
 		return rv, err
 	}
 }
 
+// Update the value of a single register.
 func (d *Debugger) WriteReg(rv RegisterValue) error {
 	if rv.Reg.IsProgramCounter() {
 		if regs, err := d.ReadRegAll(); err != nil {
@@ -348,6 +398,7 @@ func (d *Debugger) WriteReg(rv RegisterValue) error {
 	return d.mu.RegWrite(rv.Reg.uc, rv.Value)
 }
 
+// Update the values of a set of registers.
 func (d *Debugger) WriteRegs(rvs []RegisterValue) error {
 	for _, rv := range rvs {
 		if err := d.WriteReg(rv); err != nil {
@@ -358,6 +409,7 @@ func (d *Debugger) WriteRegs(rvs []RegisterValue) error {
 	return nil
 }
 
+// Update the value of a single register, specified by name.
 func (d *Debugger) WriteRegByName(name string, value uint64) error {
 	var rv RegisterValue
 	if reg, err := d.arch.register(name); err == nil {
@@ -369,20 +421,28 @@ func (d *Debugger) WriteRegByName(name string, value uint64) error {
 	}
 }
 
+// Read `size` bytes of memory starting at `addr`.
 func (d *Debugger) ReadMem(addr, size uint64) ([]byte, error) {
 	return d.mu.MemRead(addr, size)
 }
 
+// Write `data` to memory at the address specified by `addr`
 func (d *Debugger) WriteMem(addr uint64, data []byte) error {
 	return d.mu.MemWrite(addr, data)
 }
 
+// Execute `count` instructions and then return.
 // A negative count implies "Run until a breakpoint or exception"
 // Returns (hitException, intNumber, err)
 func (d *Debugger) Step(count int64) (Exception, error) {
+	if count <= 0 {
+		return Exception{}, errors.New("Debugger.Step() requires that count >= 1.")
+	}
+
 	d.step.regs = []RegisterValue{}
 	d.step.count = count
 	d.exInfo.last = Exception{}
+
 
 	log.Debugf("Stepping %d instructions.", d.step.count)
 
@@ -399,6 +459,13 @@ func (d *Debugger) Step(count int64) (Exception, error) {
 	return d.exInfo.last, d.WriteRegs(d.step.regs)
 }
 
+// Start or continue execution in the debugger. Upon hitting a breakpoint
+// or encountering an execption, this function will return. The error
+// value should be tested first to determine if the debugger encountered
+// an unexpected error. Next, the returned Exeception's Occurred() method
+// should be called to determine if an exception occured. If so, the
+// Exception.String() method may be used to retrieve information about the
+// exception.
 func (d *Debugger) Continue() (Exception, error) {
 	d.step.regs = []RegisterValue{}
 	d.step.count = -1
@@ -417,6 +484,7 @@ func (d *Debugger) Continue() (Exception, error) {
 	return d.exInfo.last, d.WriteRegs(d.step.regs)
 }
 
+// Code step callback
 func (h *codeStep) cb(mu uc.Unicorn, addr uint64, size uint32) {
 	d := h.dbg
 
@@ -448,6 +516,7 @@ func (h *codeStep) cb(mu uc.Unicorn, addr uint64, size uint32) {
 	}
 }
 
+// Interrupt callback
 func (e *exceptionInfo) cb(mu uc.Unicorn, intno uint32) {
 	var instr []byte
 
@@ -476,7 +545,7 @@ func (e *exceptionInfo) cb(mu uc.Unicorn, intno uint32) {
 	d.exInfo.last = d.arch.exception(intno, regs, instr)
 }
 
-// Disassemble `count` instructions, starting at PC
+// Disassemble `count` instructions, starting at the current program counter
 func (d *Debugger) Disassemble(count uint64) ([]Disassembly, error) {
 	if rv, err := d.ReadRegByName("pc"); err != nil {
 		return []Disassembly{}, nil
@@ -485,6 +554,7 @@ func (d *Debugger) Disassemble(count uint64) ([]Disassembly, error) {
 	}
 }
 
+// Disassemble `count` instructions, starting at the address specified by `addr`.
 func (d *Debugger) DisassembleAt(addr uint64, count uint64) ([]Disassembly, error) {
 	var ret []Disassembly
 
@@ -509,26 +579,33 @@ func (d *Debugger) DisassembleAt(addr uint64, count uint64) ([]Disassembly, erro
 	return ret, nil
 }
 
+// Set a breakpoint at the specified address. It will automatically
+// be assigned an ID.
 func (d *Debugger) SetBreakpoint(addr uint64) Breakpoint {
 	return d.bps.add(addr)
 }
 
+// Delete all existing breakpoints.
 func (d *Debugger) DeleteAllBreakpoints() {
 	d.bps.removeAll()
 }
 
+// Delete all breakpoints at the specified address/
 func (d *Debugger) DeleteBreakpointsAt(addr uint64) {
 	d.bps.removeAllAt(addr)
 }
 
+// Delete the breakpoint associatedw with the specified ID.
 func (d *Debugger) DeleteBreakpoint(id int) {
 	d.bps.remove(id)
 }
 
+// Get a list of all breakpoints.
 func (d *Debugger) GetBreakpoints() BreakpointList {
 	return d.bps.get()
 }
 
+// Get a list of breakpoints set at the specified address.
 func (d *Debugger) GetBreakpointsAt(addr uint64) BreakpointList {
 	return d.bps.getAllAt(addr)
 }

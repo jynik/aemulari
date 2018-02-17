@@ -439,5 +439,5 @@ func cmdRegWrite(ui *Ui, cmd cmd, args []string) (string, error) {
 }
 
 func cmdReset(ui *Ui, cmd cmd, args []string) (string, error) {
-	return "", ui.dbg.Reset()
+	return "", ui.dbg.Reset(true)
 }

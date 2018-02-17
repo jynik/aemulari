@@ -1,6 +1,6 @@
 package aemulari
 
-type Endianness int // Describes of bit or byte order
+type Endianness int // Bit or byte order
 
 const (
 	BigEndian    = iota // Big endian bit or byte order
