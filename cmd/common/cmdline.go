@@ -82,11 +82,11 @@ func handleMem(cfg *ae.Config) error {
 }
 
 func InitCommonFlags() {
-	memRegionUsage := "<name>:<addr>:<size>:<permissions>[:input file[:output file]]"
+	memRegionUsage := "<name>:<addr>:<size>:[permissions]:[input file]:[output file]"
 
 	flag.StringVar(&args.verbosity, "v", "warning", "Logging verbosity.")
 	flag.StringVar(&args.arch, "a", "arm", "Target architecture.")
-	flag.Var(&args.mem, "m", "Mapped Memory regions. Specify in the form: "+MemRegionUsage())
+	flag.Var(&args.mem, "m", "Mapped Memory regions. Specify in the form: "+memRegionUsage)
 	flag.Var(&args.regDefs, "r", "Set initial register value.")
 }
 

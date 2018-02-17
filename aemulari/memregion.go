@@ -88,8 +88,28 @@ func (r MemRegion) WriteFile(data []byte) error {
 	return nil
 }
 
+func (r MemRegion) IsValid() (bool, error) {
+	var err error
+
+	if len(r.name) == 0 {
+		return false, errors.New("MemRegion name cannot be blank.")
+	}
+
+	if (^uint64(0) - r.size) < r.base {
+		err = fmt.Errorf("MemRegion \"%s\" exceeds address space limits: " +
+						 "base=0x%08x, size=0x%08x.", r.name, r.base, r.size)
+		return false, err
+	}
+
+	if _, err = os.Stat(r.inputFile); os.IsNotExist(err) {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // Create a memory region as specified by the string `s`, of the form:
-//	<name>:<addr>:<size>:[permissions[:input file[:output file]]]
+//	<name>:<addr>:<size>:[permissions]:[input file]:[output_file]
 func NewMemRegion(s string) (region MemRegion, err error) {
 	var fields []string
 
@@ -98,10 +118,7 @@ func NewMemRegion(s string) (region MemRegion, err error) {
 		return
 	}
 
-	if region.name = fields[0]; len(region.name) == 0 {
-		err = errors.New("Memory region name cannot be blank.")
-		return
-	}
+	region.name = fields[0]
 
 	if region.base, err = strconv.ParseUint(fields[1], 0, 64); err != nil {
 		err = fmt.Errorf("Invalid memory region base address: %s", fields[1])
@@ -113,27 +130,24 @@ func NewMemRegion(s string) (region MemRegion, err error) {
 		return
 	}
 
-	if (^uint64(0) - region.size) < region.base {
-		err = fmt.Errorf("0x%08x:0x%08x exceeds address space limits.", region.base, region.size)
-		return
-	}
 
 	if len(fields) > 3 {
 		if err = region.perms.Set(fields[3]); err != nil {
 			return
 		}
+	} else {
+		// Default to something very permissive and easy to work with
+		region.perms.Set("rwx")
 	}
 
 	if len(fields) > 4 {
 		region.inputFile = fields[4]
-		if _, err = os.Stat(region.inputFile); os.IsNotExist(err) {
-			return
-		}
 	}
 
 	if len(fields) > 5 {
 		region.outputFile = fields[5]
 	}
 
-	return region, nil
+	_, err = region.IsValid()
+	return
 }

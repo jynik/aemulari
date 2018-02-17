@@ -22,7 +22,7 @@ func (regions MemRegions) String() string {
 // Return true if `regions` contains a region named `r`
 func (regions MemRegions) Contains(name string) bool {
 	m := regions[name]
-	return !m.IsZero()
+	return m.name == ""
 }
 
 // Create a MemRegion from specification `s` and add it to `regions`
@@ -31,12 +31,11 @@ func (regions MemRegions) Contains(name string) bool {
 //
 // TODO: Make a Set() wrapper with a more appropriately named fn?
 func (regions *MemRegions) Set(s string) error {
-	var m MemRegion
-	if err := m.Set(s); err != nil {
+	if m, err := NewMemRegion(s); err != nil {
 		return err
+	} else {
+		return regions.Add(m)
 	}
-
-	return regions.Add(m)
 }
 
 // Add a memory region to the mapping
@@ -52,7 +51,8 @@ func (regions *MemRegions) Add(m MemRegion) error {
 // Retrieve the memory region named `name`
 func (regions MemRegions) Get(name string) (MemRegion, error) {
 	m := regions[name]
-	if m.IsZero() {
+	valid, _ := m.IsValid()
+	if !valid {
 		return m, fmt.Errorf("Memory region \"%s\" does not exist.", name)
 	}
 	return m, nil
