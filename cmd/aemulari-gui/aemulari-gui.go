@@ -28,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if gui, err = ui.Create(dbg); err != nil {
+	if gui, err = ui.Create(arch, dbg); err != nil {
 		fmt.Printf("Error: %s", err)
 		os.Exit(1)
 	}

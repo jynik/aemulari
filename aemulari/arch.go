@@ -19,6 +19,9 @@ type processorMode struct {
 
 type archConstructor func(mode string) (Architecture, error)
 
+// Architechture presents a standard interface for accessing and
+// working with architectures-specific properties, such as register
+// definitions.
 type Architecture interface {
 	// Return the architecture's processor type ID
 	id() processorType
@@ -59,17 +62,18 @@ type Architecture interface {
 	// returns the associated []RegisterValue.
 	ParseRegisters(s []string) ([]RegisterValue, error)
 
+	// Return a Regular Expression that matches register names and their aliases
+	RegisterRegexp() *regexp.Regexp
+
 	// Look up a register definition by name or alias
 	// Returns a pointer to a register definition on success,
 	// or a non-nil error on failure.
 	//
 	register(name string) (*RegisterDef, error)
 
-	// Return a Regular Expression for matching register names and aliases
-	RegisterRegexp() *regexp.Regexp
 
-	// Get all register definitions
-	Registers() []*RegisterDef
+	// Retrieve all register definiitions
+	registers() []*RegisterDef
 }
 
 // Obtain an implementation of the Architecture interface for

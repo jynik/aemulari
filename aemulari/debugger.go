@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"regexp"
 
 	cs "github.com/bnagy/gapstone"
 	"github.com/op/go-logging"
@@ -301,7 +300,7 @@ func (d *Debugger) pc() (uint64, error) {
 func (d *Debugger) ReadRegAll() ([]RegisterValue, error) {
 	var err error
 
-	regDefs := d.arch.Registers()
+	regDefs := d.arch.registers()
 	regVals := make([]RegisterValue, len(regDefs), len(regDefs))
 
 	for i, reg := range regDefs {
@@ -531,9 +530,4 @@ func (d *Debugger) GetBreakpoints() BreakpointList {
 
 func (d *Debugger) GetBreakpointsAt(addr uint64) BreakpointList {
 	return d.bps.GetAt(addr)
-}
-
-// Returns a *Regexp for matching register names and aliases
-func (d *Debugger) RegisterRegexp() *regexp.Regexp {
-	return d.arch.RegisterRegexp()
 }

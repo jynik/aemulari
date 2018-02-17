@@ -34,21 +34,11 @@ func (rm *RegisterMap) register(name string) (*RegisterDef, error) {
 	return nil, fmt.Errorf("\"%s\" is not a valid register name.", name)
 }
 
-func (rm *RegisterMap) Registers() []*RegisterDef {
+func (rm *RegisterMap) registers() []*RegisterDef {
 	count := len(rm.regList)
 	regs := make([]*RegisterDef, count, count)
 	copy(regs, rm.regList)
 	return regs
-}
-
-func (rm *RegisterMap) RegisterRegexp() *regexp.Regexp {
-	restr := "(^|[^[:alpha:]])("
-
-	for name, _ := range rm.regMap {
-		restr += name + "|"
-	}
-
-	return regexp.MustCompile(restr[:len(restr)-1] + ")")
 }
 
 func (rm *RegisterMap) ParseRegister(s string) (RegisterValue, error) {
@@ -85,4 +75,14 @@ func (rm *RegisterMap) ParseRegisters(strs []string) ([]RegisterValue, error) {
 	}
 
 	return ret, nil
+}
+
+func (rm *RegisterMap) RegisterRegexp() *regexp.Regexp {
+	restr := "(^|[^[:alpha:]])("
+
+	for name, _ := range rm.regMap {
+		restr += name + "|"
+	}
+
+	return regexp.MustCompile(restr[:len(restr)-1] + ")")
 }

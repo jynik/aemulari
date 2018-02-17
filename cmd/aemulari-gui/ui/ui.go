@@ -25,7 +25,7 @@ type Ui struct {
 	quit bool
 }
 
-func Create(dbg *ae.Debugger) (*Ui, error) {
+func Create(arch ae.Architecture, dbg *ae.Debugger) (*Ui, error) {
 	var ui Ui
 	var err error
 	var rv ae.RegisterValue
@@ -38,7 +38,7 @@ func Create(dbg *ae.Debugger) (*Ui, error) {
 
 	ui.initializeViews("%08x", len(rvs))
 
-	ui.theme, err = theme.New("default", dbg.RegisterRegexp())
+	ui.theme, err = theme.New("default", arch.RegisterRegexp())
 	if err != nil {
 		return nil, err
 	}
