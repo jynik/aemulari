@@ -10,6 +10,7 @@ type Breakpoint struct {
 	state   breakpointState		// Current state of the breakpoint
 }
 
+// A list of Breakpoint objects
 type BreakpointList []Breakpoint
 
 type breakpointState int

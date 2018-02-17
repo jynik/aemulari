@@ -14,30 +14,31 @@ import (
 // Top-level debugger object
 type Debugger struct {
 	arch   Architecture
-	mu     uc.Unicorn    // Unicorn emulator handle
-	cs     cs.Engine     // Capstone disassembly engine handle
-	cfg    Config        // Configuration settings
-	mapped MemRegions    // Mapped memory regions
-	step   codeStep      // Code stepping metadata
-	bps    breakpoints   // Breakpoint settings
-	exInfo exceptionInfo // CPU Exception handling
+	mu     uc.Unicorn     // Unicorn emulator handle
+	cs     cs.Engine      // Capstone disassembly engine handle
+	cfg    DebuggerConfig // Configuration settings
+	mapped MemRegions     // Mapped memory regions
+	step   codeStep       // Code stepping metadata
+	bps    breakpoints    // Breakpoint settings
+	exInfo exceptionInfo  // CPU Exception handling
 }
 
-// Debugger configuration
-type Config struct {
+// Configuration of Debugger's initial state
+type DebuggerConfig struct {
 	RegDefs []RegisterValue // Default register values
 	Mem     MemRegions      // Memory region configuration
 }
 
-// Disassembly
+// A single disassembled instruction
 type Disassembly struct {
-	AddressU64 uint64
-	Address    string
-	Opcode     string
-	Mnemonic   string
-	Operands   string
+	AddressU64 uint64		// Address of the instruction, as a uint64
+	Address    string		// Address of the instruction, as a string
+	Opcode     string		// String representation of the binary opcode
+	Mnemonic   string		// String representation of the instruction mnemonic
+	Operands   string		// String representation of the instruction operands
 }
 
+// Returns true if two instructions are equals, and false otherwise
 func (d Disassembly) Equals(other Disassembly) bool {
 	return d.AddressU64 == other.AddressU64 &&
 		d.Address == other.Address &&
@@ -69,7 +70,7 @@ type codeStep struct {
 var log = logging.MustGetLogger("")
 
 // Instantiate and configure a new Debugger
-func NewDebugger(a Architecture, c Config) (*Debugger, error) {
+func NewDebugger(a Architecture, c DebuggerConfig) (*Debugger, error) {
 	var d Debugger
 
 	if err := d.init(a, c, false); err != nil {
@@ -95,7 +96,7 @@ func (d *Debugger) Reset() error {
 	return d.init(d.arch, newConfig, true)
 }
 
-func (d *Debugger) init(arch Architecture, cfg Config, reset bool) error {
+func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error {
 	var err error
 
 	d.cfg = cfg

@@ -28,7 +28,7 @@ type cmdlineArgs struct {
 var args cmdlineArgs
 var log = logging.MustGetLogger("")
 
-func handleVerbosity(cfg *ae.Config) error {
+func handleVerbosity(cfg *ae.DebuggerConfig) error {
 	args.verbosity = strings.ToLower(strings.Trim(args.verbosity, "\r\n\t "))
 	if args.verbosity == "critical" {
 		logging.SetLevel(logging.CRITICAL, "")
@@ -49,7 +49,7 @@ func handleVerbosity(cfg *ae.Config) error {
 	return nil
 }
 
-func handleArchitecture(cfg *ae.Config) (ae.Architecture, error) {
+func handleArchitecture(cfg *ae.DebuggerConfig) (ae.Architecture, error) {
 	fields := strings.Split(args.arch, ":")
 
 	arch := fields[0]
@@ -68,7 +68,7 @@ func handleArchitecture(cfg *ae.Config) (ae.Architecture, error) {
 	return ret, err
 }
 
-func handleMem(cfg *ae.Config) error {
+func handleMem(cfg *ae.DebuggerConfig) error {
 	var err error = nil
 
 	haveCodeRegion := args.mem.Contains("code")
@@ -90,8 +90,8 @@ func InitCommonFlags() {
 	flag.Var(&args.regDefs, "r", "Set initial register value.")
 }
 
-func Parse() (ae.Architecture, ae.Config, error) {
-	var cfg ae.Config
+func Parse() (ae.Architecture, ae.DebuggerConfig, error) {
+	var cfg ae.DebuggerConfig
 	var arch ae.Architecture
 	var err error
 
