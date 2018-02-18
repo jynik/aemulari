@@ -29,10 +29,12 @@ type Register struct {
 	Value uint64
 }
 
+// Return the name of a Register.
 func (r *Register) Name() string {
 	return r.attr.name
 }
 
+// Return a string that includes a Register's name and current value.
 func (r *Register) String() string {
 	return fmt.Sprintf("%-6s"+r.attr.fmt, r.attr.name, r.Value)
 }
@@ -46,6 +48,7 @@ func (r *Register) setFlagValue(f *registerFlag, value uint64) {
 	r.Value |= ((value << f.lsb) & f.mask)
 }
 
+// Return a list of strings that include a Register's flag bits and their associated values.
 func (r *Register) FlagStrings() []string {
 	var ret []string
 	for _, flag := range r.attr.flags {

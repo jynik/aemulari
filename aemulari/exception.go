@@ -7,12 +7,13 @@ type Exception struct {
 	desc  string // Printable string describing the exception
 }
 
-// Tests whether Exception holds information about an exception that occurred
+// Returns true if the Exception object contains information
+// about a processor exception that occurred.
 func (e *Exception) Occurred() bool {
 	return e.desc != ""
 }
 
-// Return a string representation of an Exception
+// Return a string describing a processor exception, if one occurred.
 func (e *Exception) String() string {
 	return e.desc
 }
