@@ -271,7 +271,7 @@ func cmdClear(ui *Ui, cmd cmd, args []string) (string, error) {
 			return "", err
 		} else {
 			v.Clear()
-			vCmd.Clear()
+			v.SetOrigin(0, 0)
 			cleared = true
 		}
 	}
@@ -279,6 +279,7 @@ func cmdClear(ui *Ui, cmd cmd, args []string) (string, error) {
 	if alen < 2 || strings.HasPrefix("commands", lowerTrim(args[1])) {
 		ui.hist = CommandHistory{}
 		vCmd.Clear()
+		vCmd.SetOrigin(0, 0)
 		cleared = true
 	}
 
