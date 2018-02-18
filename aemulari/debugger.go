@@ -122,6 +122,7 @@ func (d *Debugger) Reset(keepMappings bool) error {
 }
 
 func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error {
+	var haveCode bool = false
 	var err error
 
 	d.cfg = cfg
@@ -152,9 +153,15 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 		if err = d.Map(m); err != nil {
 			log.Debugf("Failed to map %s", m)
 			return d.closeAll(err)
+		} else if m.name == "code" && m.perms.Exec {
+			haveCode = true
 		}
 
 		log.Debugf("Mapped %s", m)
+	}
+
+	if !haveCode {
+		return errors.New("An executable memory region named \"code\" is required.")
 	}
 
 	// Load default register values

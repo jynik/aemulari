@@ -19,7 +19,7 @@ func (regions MemRegions) String() string {
 	return buf.String()
 }
 
-// Return true if `regions` contains a region named `r`
+// Return true if `regions` contains a region named `name`
 func (regions MemRegions) Contains(name string) bool {
 	m := regions[name]
 	return m.name == ""
