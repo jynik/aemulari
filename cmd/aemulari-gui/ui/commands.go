@@ -103,17 +103,17 @@ func matches(toMatch, s string) bool {
 // Keep this sorted in the order of preferred completion and help display order
 var cmdList []cmd = []cmd{
 	{
-		names:        []string{"regwrite", "rw"},
+		names:        []string{"rw"},
 		min:          3,
 		max:          3,
 		exec:         cmdRegWrite,
 		mayTaintRegs: true,
-		help: "<regsister> <value>\n" +
+		help: "<register> <value>\n" +
 			"Write <value> to <register>.",
 	},
 
 	{
-		names:       []string{"memwrite", "mw"},
+		names:       []string{"mw"},
 		min:         3,
 		max:         4096, // Arbitrary "good enough" value
 		exec:        cmdMemWrite,
@@ -159,9 +159,9 @@ var cmdList []cmd = []cmd{
 			"Set a breakpoint at PC or [address], if specified.",
 	},
 
-	// Show breakpoints
+	// Show the current status of various items
 	{
-		names:       []string{"show", "display"},
+		names:       []string{"show"},
 		min:         2,
 		max:         3,
 		exec:        cmdShow,
@@ -177,11 +177,11 @@ var cmdList []cmd = []cmd{
 		min:   1,
 		max:   3,
 		exec:  cmdDelete,
-		help: "[all | [<id|address> <value>]]\n" +
+		help: "[all | [id|address <value>]]\n" +
 			" - With no arguments, this deletes any breakpoints at PC.\n" +
 			" - If run with \"all\", all breakpoints are removed.\n" +
-			" - Providing <id> and a <value> removes the associated breakpoint.\n" +
-			" - Specifying <address> and <value> removes all breakpoints at <address>.\n",
+			" - Providing `id` and a <value> removes the associated breakpoint.\n" +
+			" - Specifying `address` and <value> removes all breakpoints at <value>.\n",
 	},
 
 	{
@@ -198,7 +198,7 @@ var cmdList []cmd = []cmd{
 		min:   1,
 		max:   1,
 		exec:  cmdReset,
-		help:  "\nResets the debugger. Mappings and breakpoints are kept as-is.",
+		help:  "\nResets the debugger. Memory mappings and breakpoints are kept as-is.",
 	},
 
 	{
@@ -211,7 +211,7 @@ var cmdList []cmd = []cmd{
 	},
 
 	{
-		names: []string{"help", "halp!", "wtf"},
+		names: []string{"help"},
 		min:   1,
 		max:   2,
 		/* exec assigned later to avoid initialization loop */
@@ -421,6 +421,14 @@ func cmdShow(ui *Ui, cmd cmd, args []string) (string, error) {
 			return "", err
 		} else {
 			ui.mem.addr = newAddr
+			ui.mem.pdata = []byte{}
+
+			// FIXME This shouldn't require a double-kick to prevent it from
+			//		 incorrectly highlighting changes when we point the view at
+			//		 a differnt memory location
+			ui.updateMemView(view)
+			ui.mem.pdata = []byte{}
+
 			return "", ui.updateMemView(view)
 		}
 

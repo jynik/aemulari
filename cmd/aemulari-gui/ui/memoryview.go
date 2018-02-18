@@ -14,7 +14,6 @@ type MemInfo struct {
 	addr uint64
 	data []byte
 
-	paddr uint64 // Previous address
 	pdata []byte // Previous state of data
 
 	tainted bool // Has data been potentially tainted?
@@ -49,7 +48,7 @@ func (ui *Ui) updateMemView(view *gocui.View) error {
 	}
 
 	view.Clear()
-	// TODO get fmt from ui.dbg
+	// TODO get address fmt (i.e., num bytes) from ui.dbg
 	fmt.Fprintf(view, "%s", ui.hexdump(ui.mem.addr, "%08x", ui.theme, ui.mem))
 
 	return nil
