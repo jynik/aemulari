@@ -93,6 +93,8 @@ func (r MemRegion) IsValid() (bool, error) {
 
 	if len(r.name) == 0 {
 		return false, errors.New("MemRegion name cannot be blank.")
+	} else if r.name == "code" && len(r.inputFile) == 0 {
+		return false, errors.New("The \"code\" memory region requires an input file.")
 	}
 
 	if (^uint64(0) - r.size) < r.base {
@@ -103,6 +105,10 @@ func (r MemRegion) IsValid() (bool, error) {
 
 	if _, err = os.Stat(r.inputFile); os.IsNotExist(err) {
 		return false, err
+	}
+
+	if r.name == "code" && !r.perms.Exec {
+		return false, errors.New("The \"code\" memory region must be executable.")
 	}
 
 	return true, nil
