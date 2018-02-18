@@ -14,7 +14,7 @@ type FlagInfo struct {
 
 func (ui *Ui) updateFlagsView(view *gocui.View) error {
 
-	newFlags := []string{}
+	flags := []string{}
 	highlightChanges := ui.theme.ColorIfStringsDiffer
 
 	regs, err := ui.dbg.ReadRegAll()
@@ -23,27 +23,24 @@ func (ui *Ui) updateFlagsView(view *gocui.View) error {
 	}
 
 	for _, reg := range regs {
-		for _, flag := range reg.Reg.Flags {
-			nv := flag.GetNamedString(reg.Value)
-			newFlags = append(newFlags, nv)
-		}
+		flags = append(flags, reg.FlagStrings()...)
 	}
 
 	if len(ui.flags.prev) == 0 {
-		ui.flags.prev = newFlags
+		ui.flags.prev = flags
 	}
 
 	view.Clear()
-	numFlags := len(newFlags)
+	numFlags := len(flags)
 	for i := 0; i < numFlags; i += 2 {
-		line := " " + highlightChanges(newFlags[i], ui.flags.prev[i])
+		line := " " + highlightChanges(flags[i], ui.flags.prev[i])
 
 		if (i + 1) < numFlags {
-			for j := len(newFlags[i]); j < 16; j++ {
+			for j := len(flags[i]); j < 16; j++ {
 				line += " "
 			}
 
-			line += highlightChanges(newFlags[i+1], ui.flags.prev[i+1])
+			line += highlightChanges(flags[i+1], ui.flags.prev[i+1])
 		}
 
 		fmt.Fprintln(view, line)
@@ -51,7 +48,7 @@ func (ui *Ui) updateFlagsView(view *gocui.View) error {
 
 	if ui.flags.tainted {
 		ui.flags.prev = ui.flags.curr
-		ui.flags.curr = newFlags
+		ui.flags.curr = flags
 		ui.flags.tainted = false
 	}
 

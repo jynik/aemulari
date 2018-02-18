@@ -39,12 +39,12 @@ type Architecture interface {
 	// Adjust current PC, if necessary.  This allows architecture-specific
 	// information (e.g., current mode denoted by status register) to be
 	// considered before passing the PC the emulator when (re)starting it.
-	currentPC(pc uint64, regs []RegisterValue) uint64
+	currentPC(pc uint64, regs []Register) uint64
 
 	// Determine current data endianess.
 	// The `regs` parameter should contain the current state of registers.
 	// Returns BigEndian or LittleEndian
-	endianness(regs []RegisterValue) Endianness
+	endianness(regs []Register) Endianness
 
 	// Create an Exception with a descriptive String() output
 	//
@@ -52,15 +52,15 @@ type Architecture interface {
 	//	regs	Current state of registers
 	//	instr	Instruction that generated exception
 	//
-	exception(intno uint32, regs []RegisterValue, instr []byte) Exception
+	exception(intno uint32, regs []Register, instr []byte) Exception
 
-	// Parse a string and return a RegisterValue.
+	// Parse a string and return a Register.
 	// Expected form: <reg name>=<value>
-	ParseRegister(s string) (RegisterValue, error)
+	ParseRegister(s string) (Register, error)
 
 	// Performs ParseRegister() on each entry in the provided slice, and
-	// returns the associated []RegisterValue.
-	ParseRegisters(s []string) ([]RegisterValue, error)
+	// returns the associated []Register.
+	ParseRegisters(s []string) ([]Register, error)
 
 	// Return a Regular Expression that matches register names and their aliases
 	RegisterRegexp() *regexp.Regexp
@@ -69,11 +69,10 @@ type Architecture interface {
 	// Returns a pointer to a register definition on success,
 	// or a non-nil error on failure.
 	//
-	register(name string) (*RegisterDef, error)
-
+	register(name string) (*registerAttr, error)
 
 	// Retrieve all register definiitions
-	registers() []*RegisterDef
+	registers() []*registerAttr
 }
 
 // Obtain an implementation of the Architecture interface for

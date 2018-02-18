@@ -4,10 +4,10 @@ import "fmt"
 
 // A Breakpoint may be used to halt execution when it reaches a specific address.
 type Breakpoint struct {
-	ID      int					// Numeric identifier for the Breakpoint
-	Address uint64				// Address where Breakpoint is placed
-	count   uint				// Number of times the breakpoint's been hit
-	state   breakpointState		// Current state of the breakpoint
+	ID      int             // Numeric identifier for the Breakpoint
+	Address uint64          // Address where Breakpoint is placed
+	count   uint            // Number of times the breakpoint's been hit
+	state   breakpointState // Current state of the breakpoint
 }
 
 // A list of Breakpoint objects

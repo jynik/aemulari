@@ -52,112 +52,112 @@ var excpStr map[uint32]string = map[uint32]string{
 
 // Per: http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0473m/dom1359731136117.html
 
-var arm_r0 RegisterDef = RegisterDef{
+var arm_r0 registerAttr = registerAttr{
 	name: "r0",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R0,
 }
 
-var arm_r1 RegisterDef = RegisterDef{
+var arm_r1 registerAttr = registerAttr{
 	name: "r1",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R1,
 }
 
-var arm_r2 RegisterDef = RegisterDef{
+var arm_r2 registerAttr = registerAttr{
 	name: "r2",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R2,
 }
 
-var arm_r3 RegisterDef = RegisterDef{
+var arm_r3 registerAttr = registerAttr{
 	name: "r3",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R3,
 }
 
-var arm_r4 RegisterDef = RegisterDef{
+var arm_r4 registerAttr = registerAttr{
 	name: "r4",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R4,
 }
 
-var arm_r5 RegisterDef = RegisterDef{
+var arm_r5 registerAttr = registerAttr{
 	name: "r5",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R5,
 }
 
-var arm_r6 RegisterDef = RegisterDef{
+var arm_r6 registerAttr = registerAttr{
 	name: "r6",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R6,
 }
 
-var arm_r7 RegisterDef = RegisterDef{
+var arm_r7 registerAttr = registerAttr{
 	name: "r7",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R7,
 }
 
-var arm_r8 RegisterDef = RegisterDef{
+var arm_r8 registerAttr = registerAttr{
 	name: "r8",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R8,
 }
 
-var arm_r9 RegisterDef = RegisterDef{
+var arm_r9 registerAttr = registerAttr{
 	name: "r9",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R9,
 }
 
-var arm_r10 RegisterDef = RegisterDef{
+var arm_r10 registerAttr = registerAttr{
 	name: "r10",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R10,
 }
 
-var arm_r11 RegisterDef = RegisterDef{
+var arm_r11 registerAttr = registerAttr{
 	name: "r11",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R11,
 }
 
-var arm_r12 RegisterDef = RegisterDef{
+var arm_r12 registerAttr = registerAttr{
 	name: "r12",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R12,
 }
 
-var arm_r13 RegisterDef = RegisterDef{
+var arm_r13 registerAttr = registerAttr{
 	name: "sp",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R13,
 }
 
-var arm_r14 RegisterDef = RegisterDef{
+var arm_r14 registerAttr = registerAttr{
 	name: "lr",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_R14,
 }
 
-var arm_r15 RegisterDef = RegisterDef{
+var arm_r15 registerAttr = registerAttr{
 	name: "pc",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
@@ -165,12 +165,12 @@ var arm_r15 RegisterDef = RegisterDef{
 	pc:   true,
 }
 
-var arm_cpsr RegisterDef = RegisterDef{
+var arm_cpsr registerAttr = registerAttr{
 	name: "cpsr",
 	mask: 0xffffffff,
 	fmt:  "0x%08x",
 	uc:   uc.ARM_REG_CPSR,
-	Flags: []Flag{
+	flags: []registerFlag{
 		{
 			name: "N",
 			desc: "Negative: 1 = result was negative, 0 = result was positive",
@@ -297,23 +297,23 @@ func armConstructor(mode string) (Architecture, error) {
 		},
 	}
 
-	arm.RegisterMap.add([]string{"r0", "a1"}, &arm_r0)
-	arm.RegisterMap.add([]string{"r1", "a2"}, &arm_r1)
-	arm.RegisterMap.add([]string{"r2", "a3"}, &arm_r2)
-	arm.RegisterMap.add([]string{"r3", "a4"}, &arm_r3)
-	arm.RegisterMap.add([]string{"r4", "v1"}, &arm_r4)
-	arm.RegisterMap.add([]string{"r5", "v2"}, &arm_r5)
-	arm.RegisterMap.add([]string{"r6", "v3"}, &arm_r6)
-	arm.RegisterMap.add([]string{"r7", "v4"}, &arm_r7)
-	arm.RegisterMap.add([]string{"r8", "v5"}, &arm_r8)
-	arm.RegisterMap.add([]string{"r9", "v6", "sb"}, &arm_r9)
-	arm.RegisterMap.add([]string{"r10", "v7", "sl"}, &arm_r10)
-	arm.RegisterMap.add([]string{"r11", "v8", "fp"}, &arm_r11)
-	arm.RegisterMap.add([]string{"r12", "ip"}, &arm_r12)
-	arm.RegisterMap.add([]string{"sp", "r13"}, &arm_r13)
-	arm.RegisterMap.add([]string{"lr", "r14"}, &arm_r14)
-	arm.RegisterMap.add([]string{"pc", "r15"}, &arm_r15)
-	arm.RegisterMap.add([]string{"cpsr", "r16"}, &arm_cpsr)
+	arm.registerMap.add([]string{"r0", "a1"}, &arm_r0)
+	arm.registerMap.add([]string{"r1", "a2"}, &arm_r1)
+	arm.registerMap.add([]string{"r2", "a3"}, &arm_r2)
+	arm.registerMap.add([]string{"r3", "a4"}, &arm_r3)
+	arm.registerMap.add([]string{"r4", "v1"}, &arm_r4)
+	arm.registerMap.add([]string{"r5", "v2"}, &arm_r5)
+	arm.registerMap.add([]string{"r6", "v3"}, &arm_r6)
+	arm.registerMap.add([]string{"r7", "v4"}, &arm_r7)
+	arm.registerMap.add([]string{"r8", "v5"}, &arm_r8)
+	arm.registerMap.add([]string{"r9", "v6", "sb"}, &arm_r9)
+	arm.registerMap.add([]string{"r10", "v7", "sl"}, &arm_r10)
+	arm.registerMap.add([]string{"r11", "v8", "fp"}, &arm_r11)
+	arm.registerMap.add([]string{"r12", "ip"}, &arm_r12)
+	arm.registerMap.add([]string{"sp", "r13"}, &arm_r13)
+	arm.registerMap.add([]string{"lr", "r14"}, &arm_r14)
+	arm.registerMap.add([]string{"pc", "r15"}, &arm_r15)
+	arm.registerMap.add([]string{"cpsr", "r16"}, &arm_cpsr)
 
 	return arm, nil
 }
@@ -329,11 +329,11 @@ func (a *archArm) initialPC(pc uint64) uint64 {
 	}
 }
 
-func (a *archArm) currentPC(pc uint64, rvs []RegisterValue) uint64 {
-	for _, rv := range rvs {
-		if rv.Reg.name == "cpsr" {
+func (a *archArm) currentPC(pc uint64, regs []Register) uint64 {
+	for _, reg := range regs {
+		if reg.attr.name == "cpsr" {
 			// Test THUMB bit
-			if (rv.Value & (1 << 5)) != 0 {
+			if (reg.Value & (1 << 5)) != 0 {
 				return pc | 0x1
 			}
 
@@ -344,11 +344,11 @@ func (a *archArm) currentPC(pc uint64, rvs []RegisterValue) uint64 {
 	panic("arm.CurrentPC() was not passed CPSR.")
 }
 
-func (a *archArm) endianness(rvs []RegisterValue) Endianness {
-	for _, rv := range rvs {
-		if rv.Reg.name == "cpsr" {
+func (a *archArm) endianness(regs []Register) Endianness {
+	for _, reg := range regs {
+		if reg.attr.name == "cpsr" {
 			// Test CPSR Endianness-bit
-			if (rv.Value & (1 << 9)) != 0 {
+			if (reg.Value & (1 << 9)) != 0 {
 				return BigEndian
 			}
 
@@ -359,7 +359,7 @@ func (a *archArm) endianness(rvs []RegisterValue) Endianness {
 	panic("arm.Endianness() was not passed CPSR.")
 }
 
-func (a *archArm) exception(intno uint32, regs []RegisterValue, instr []byte) Exception {
+func (a *archArm) exception(intno uint32, regs []Register, instr []byte) Exception {
 	var e Exception
 
 	// TODO: Check if we're in Thumb mode
@@ -371,7 +371,7 @@ func (a *archArm) exception(intno uint32, regs []RegisterValue, instr []byte) Ex
 	}
 
 	for _, r := range regs {
-		if r.Reg.Name() == "pc" {
+		if r.attr.name == "pc" {
 			havePc = true
 			e.pc = r.Value
 			break

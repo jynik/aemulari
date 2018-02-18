@@ -31,13 +31,13 @@ var log = logging.MustGetLogger("")
 
 var linesep string = strings.Repeat("-", 80)
 
-func PrintRegisters(rvs []ae.RegisterValue) {
-	var rv ae.RegisterValue
+func PrintRegisters(regs []ae.Register) {
+	var reg ae.Register
 	var i int
 
 	fmt.Println(" Registers\n" + linesep)
-	for i, rv = range rvs {
-		fmt.Printf("%s    ", &rv)
+	for i, reg = range regs {
+		fmt.Printf("%s    ", &reg)
 		if (i+1)%3 == 0 {
 			fmt.Println()
 		}

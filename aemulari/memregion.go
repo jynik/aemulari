@@ -96,8 +96,8 @@ func (r MemRegion) IsValid() (bool, error) {
 	}
 
 	if (^uint64(0) - r.size) < r.base {
-		err = fmt.Errorf("MemRegion \"%s\" exceeds address space limits: " +
-						 "base=0x%08x, size=0x%08x.", r.name, r.base, r.size)
+		err = fmt.Errorf("MemRegion \"%s\" exceeds address space limits: "+
+			"base=0x%08x, size=0x%08x.", r.name, r.base, r.size)
 		return false, err
 	}
 
@@ -129,7 +129,6 @@ func NewMemRegion(s string) (region MemRegion, err error) {
 		err = fmt.Errorf("Invalid memory region size: %s", fields[2])
 		return
 	}
-
 
 	if len(fields) > 3 {
 		if err = region.perms.Set(fields[3]); err != nil {

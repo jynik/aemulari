@@ -26,17 +26,17 @@ type Debugger struct {
 
 // Configuration of Debugger's initial state
 type DebuggerConfig struct {
-	RegDefs []RegisterValue // Default register values
-	Mem     MemRegions      // Memory region configuration
+	Regs []Register // Default register values
+	Mem  MemRegions // Memory region configuration
 }
 
 // A single disassembled instruction separated into its components
 type Disassembly struct {
-	AddressU64 uint64		// Address of the instruction, as a uint64
-	Address    string		// Address of the instruction, as a string
-	Opcode     string		// String representation of the binary opcode
-	Mnemonic   string		// String representation of the instruction mnemonic
-	Operands   string		// String representation of the instruction operands
+	AddressU64 uint64 // Address of the instruction, as a uint64
+	Address    string // Address of the instruction, as a string
+	Opcode     string // String representation of the binary opcode
+	Mnemonic   string // String representation of the instruction mnemonic
+	Operands   string // String representation of the instruction operands
 }
 
 // Returns true if two instructions are the same, and false otherwise.
@@ -66,7 +66,7 @@ type codeStep struct {
 	// Need to backup state prior to stopping emulator and restore it
 	// after we return from our execution. Unclear if this is necessitated
 	// due to a Unicorn defect, or our own misuse of the framework
-	regs []RegisterValue
+	regs []Register
 }
 
 var log = logging.MustGetLogger("")
@@ -83,7 +83,7 @@ func NewDebugger(a Architecture, c DebuggerConfig) (*Debugger, error) {
 }
 
 // Reset the debugger to its original state. If `keepMappings` is true,
-// the current state of memory mappyings will be retained. This is often
+// the current state of memory mappings will be retained. This is often
 // useful if mappings have been added over the course of debugging.
 //
 // Otherwise, if `keepMappings` is false, existing memory mappings will be
@@ -159,14 +159,14 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 
 	// Load default register values
 	var loadedPc bool = false
-	for _, r := range d.cfg.RegDefs {
+	for _, r := range d.cfg.Regs {
 		log.Debugf("Loading %s", r)
-		if r.Reg.IsProgramCounter() {
+		if r.attr.pc {
 			loadedPc = true
 			r.Value = d.arch.initialPC(r.Value)
 		}
 
-		if err := d.mu.RegWrite(r.Reg.uc, r.Value); err != nil {
+		if err := d.mu.RegWrite(r.attr.uc, r.Value); err != nil {
 			return d.closeAll(err)
 		}
 	}
@@ -325,7 +325,7 @@ func (d *Debugger) pc() (uint64, error) {
 	}
 
 	for _, reg := range regs {
-		if reg.Reg.IsProgramCounter() {
+		if reg.attr.pc {
 			pc := d.arch.currentPC(reg.Value, regs)
 			return pc, nil
 		}
@@ -335,73 +335,68 @@ func (d *Debugger) pc() (uint64, error) {
 }
 
 // Retrieve the current state all registers.
-func (d *Debugger) ReadRegAll() ([]RegisterValue, error) {
+func (d *Debugger) ReadRegAll() ([]Register, error) {
 	var err error
 
 	regDefs := d.arch.registers()
-	regVals := make([]RegisterValue, len(regDefs), len(regDefs))
+	regVals := make([]Register, len(regDefs), len(regDefs))
 
 	for i, reg := range regDefs {
 		regVals[i], err = d.readReg(reg)
 		if err != nil {
-			return []RegisterValue{}, err
+			return []Register{}, err
 		}
 	}
 
 	return regVals, nil
 }
 
-// Retrieve the current state of the register described by `reg`.
-func (d *Debugger) readReg(reg *RegisterDef) (RegisterValue, error) {
-	var rv RegisterValue
-	var val uint64
-	var err error
+// Retrieve the current state of the register described by the provided attributes
+func (d *Debugger) readReg(attr *registerAttr) (Register, error) {
+	var reg Register
 
-	if val, err = d.mu.RegRead(reg.uc); err != nil {
-		return rv, err
-	}
+	val, err := d.mu.RegRead(attr.uc)
+	reg.attr = attr
+	reg.Value = val
 
-	rv.Reg = reg
-	rv.Value = val
-	return rv, nil
+	return reg, err
 }
 
-// Read a register and update the its value in the provided RegisterValue
-func (d *Debugger) ReadReg(rv *RegisterValue) error {
-	reg, err := d.readReg(rv.Reg)
-	if err != nil {
-		return err
-	}
-	rv.Value = reg.Value
-	return nil
+// Read a register and update the its value in the provided Register
+func (d *Debugger) ReadReg(reg *Register) error {
+	newReg, err := d.readReg(reg.attr)
+	reg.Value = newReg.Value
+	return err
 }
 
 // Retrieve the current state of a register, specified by its name
-func (d *Debugger) ReadRegByName(name string) (RegisterValue, error) {
-	var rv RegisterValue
-	if reg, err := d.arch.register(name); err == nil {
-		return d.readReg(reg)
+func (d *Debugger) ReadRegByName(name string) (Register, error) {
+	var reg Register
+	if attr, err := d.arch.register(name); err == nil {
+		return d.readReg(attr)
 	} else {
-		return rv, err
+		return reg, err
 	}
 }
 
 // Update the value of a single register.
-func (d *Debugger) WriteReg(rv RegisterValue) error {
-	if rv.Reg.IsProgramCounter() {
+func (d *Debugger) WriteReg(reg Register) error {
+	if reg.attr.pc {
+
+		// Retrieve current system state and adjust PC value if needed
 		if regs, err := d.ReadRegAll(); err != nil {
 			return err
 		} else {
-			rv.Value = d.arch.currentPC(rv.Value, regs)
+			reg.Value = d.arch.currentPC(reg.Value, regs)
 		}
 	}
-	return d.mu.RegWrite(rv.Reg.uc, rv.Value)
+	return d.mu.RegWrite(reg.attr.uc, reg.Value)
 }
 
 // Update the values of a set of registers.
-func (d *Debugger) WriteRegs(rvs []RegisterValue) error {
-	for _, rv := range rvs {
-		if err := d.WriteReg(rv); err != nil {
+func (d *Debugger) WriteRegs(regs []Register) error {
+	for _, reg := range regs {
+		if err := d.WriteReg(reg); err != nil {
 			return err
 		}
 	}
@@ -411,11 +406,11 @@ func (d *Debugger) WriteRegs(rvs []RegisterValue) error {
 
 // Update the value of a single register, specified by name.
 func (d *Debugger) WriteRegByName(name string, value uint64) error {
-	var rv RegisterValue
-	if reg, err := d.arch.register(name); err == nil {
-		rv.Reg = reg
-		rv.Value = value
-		return d.WriteReg(rv)
+	var reg Register
+	if attr, err := d.arch.register(name); err == nil {
+		reg.attr = attr
+		reg.Value = value
+		return d.WriteReg(reg)
 	} else {
 		return err
 	}
@@ -439,10 +434,9 @@ func (d *Debugger) Step(count int64) (Exception, error) {
 		return Exception{}, errors.New("Debugger.Step() requires that count >= 1.")
 	}
 
-	d.step.regs = []RegisterValue{}
+	d.step.regs = []Register{}
 	d.step.count = count
 	d.exInfo.last = Exception{}
-
 
 	log.Debugf("Stepping %d instructions.", d.step.count)
 
@@ -467,7 +461,7 @@ func (d *Debugger) Step(count int64) (Exception, error) {
 // Exception.String() method may be used to retrieve information about the
 // exception.
 func (d *Debugger) Continue() (Exception, error) {
-	d.step.regs = []RegisterValue{}
+	d.step.regs = []Register{}
 	d.step.count = -1
 	d.exInfo.last = Exception{}
 
@@ -595,7 +589,7 @@ func (d *Debugger) DeleteBreakpointsAt(addr uint64) {
 	d.bps.removeAllAt(addr)
 }
 
-// Delete the breakpoint associatedw with the specified ID.
+// Delete the breakpoint associated with the specified ID.
 func (d *Debugger) DeleteBreakpoint(id int) {
 	d.bps.remove(id)
 }

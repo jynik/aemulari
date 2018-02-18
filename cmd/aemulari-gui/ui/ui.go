@@ -27,16 +27,13 @@ type Ui struct {
 
 func Create(arch ae.Architecture, dbg *ae.Debugger) (*Ui, error) {
 	var ui Ui
-	var err error
-	var rv ae.RegisterValue
-	var rvs []ae.RegisterValue
 
-	rvs, err = dbg.ReadRegAll()
+	regs, err := dbg.ReadRegAll()
 	if err != nil {
 		return nil, err
 	}
 
-	ui.initializeViews("%08x", len(rvs))
+	ui.initializeViews("%08x", len(regs))
 
 	ui.theme, err = theme.New("default", arch.RegisterRegexp())
 	if err != nil {
@@ -57,10 +54,10 @@ func Create(arch ae.Architecture, dbg *ae.Debugger) (*Ui, error) {
 	}
 
 	ui.dbg = dbg
-	if rv, err = ui.dbg.ReadRegByName("pc"); err != nil {
+	if reg, err := ui.dbg.ReadRegByName("pc"); err != nil {
 		return nil, err
 	} else {
-		ui.pc = rv.Value
+		ui.pc = reg.Value
 	}
 
 	ui.mem.addr = ui.pc

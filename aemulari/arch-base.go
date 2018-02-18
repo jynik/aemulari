@@ -4,7 +4,7 @@ type archBase struct {
 	processor   processorType
 	mode        processorMode
 	maxInstrLen uint
-	RegisterMap
+	registerMap
 }
 
 func (b *archBase) id() processorType {

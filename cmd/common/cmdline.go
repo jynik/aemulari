@@ -18,11 +18,10 @@ type cmdlineArgs struct {
 
 	verbosity string // Log verbosity
 
-	regDefs appender // Initial register values
+	regDefaults appender // Initial register values
 
 	// Parsed arguments
-	mem  ae.MemRegions // Memory regions to configure
-	regs ae.RegisterMap
+	mem ae.MemRegions // Memory regions to configure
 }
 
 var args cmdlineArgs
@@ -64,7 +63,7 @@ func handleArchitecture(cfg *ae.DebuggerConfig) (ae.Architecture, error) {
 		return ret, err
 	}
 
-	cfg.RegDefs, err = ret.ParseRegisters(args.regDefs)
+	cfg.Regs, err = ret.ParseRegisters(args.regDefaults)
 	return ret, err
 }
 
@@ -87,7 +86,7 @@ func InitCommonFlags() {
 	flag.StringVar(&args.verbosity, "v", "warning", "Logging verbosity.")
 	flag.StringVar(&args.arch, "a", "arm", "Target architecture.")
 	flag.Var(&args.mem, "m", "Mapped Memory regions. Specify in the form: "+memRegionUsage)
-	flag.Var(&args.regDefs, "r", "Set initial register value.")
+	flag.Var(&args.regDefaults, "r", "Set initial register value.")
 }
 
 func Parse() (ae.Architecture, ae.DebuggerConfig, error) {
