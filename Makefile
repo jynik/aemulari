@@ -1,6 +1,6 @@
 GO ?= go
 
-DEPS := .deps/unicorn .deps/gapstone .deps/gocui
+DEPS := .deps/unicorn .deps/capstr .deps/gocui
 SRC  := $(wildcard aemulari/*.go)
 BIN  := bin/aemulari bin/aemulari-gui
 
@@ -19,16 +19,13 @@ bin/aemulari-gui: ./cmd/aemulari-gui/aemulari-gui.go $(SRC) $(DEPS) bin
 	@mkdir -p .deps
 
 .deps/unicorn: .deps
-	$(GO) get -u github.com/unicorn-engine/unicorn/bindings/go
-	@touch $@
+	$(GO) get -u github.com/unicorn-engine/unicorn/bindings/go && touch $@
 
-.deps/gapstone: .deps
-	$(GO) get -u github.com/bnagy/gapstone
-	@touch $@
+.deps/capstr: .deps
+	$(GO) get -u github.com/lunixbochs/capstr && touch $@
 
 .deps/gocui: .deps
-	$(GO) get -u github.com/jroimartin/gocui
-	@touch $@
+	$(GO) get -u github.com/jroimartin/gocui && touch $@
 
 test-asm:
 	$(MAKE) -C test-asm

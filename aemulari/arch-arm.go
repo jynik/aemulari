@@ -2,7 +2,7 @@ package aemulari
 
 import (
 	"fmt"
-	cs "github.com/bnagy/gapstone"
+	cs "github.com/lunixbochs/capstr"
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
 )
 
@@ -282,16 +282,16 @@ func armConstructor(mode string) (Architecture, error) {
 
 	switch mode {
 	case "arm", "":
-		modeInfo = processorMode{uc.MODE_ARM, cs.CS_MODE_ARM}
+		modeInfo = processorMode{uc.MODE_ARM, cs.MODE_ARM}
 	case "thumb", "thumb2":
-		modeInfo = processorMode{uc.MODE_THUMB, cs.CS_MODE_THUMB}
+		modeInfo = processorMode{uc.MODE_THUMB, cs.MODE_THUMB}
 	default:
 		return nil, fmt.Errorf("Invalid Arm mode specified (\"%s\")", mode)
 	}
 
 	arm := &archArm{
 		archBase{
-			processor:   processorType{uc.ARCH_ARM, cs.CS_ARCH_ARM},
+			processor:   processorType{uc.ARCH_ARM, cs.ARCH_ARM},
 			mode:        modeInfo,
 			maxInstrLen: 4,
 		},

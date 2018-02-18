@@ -13,8 +13,8 @@ type processorType struct {
 
 // Processor mode ID
 type processorMode struct {
-	uc int  // Unicorn ID for the initial mode
-	cs uint // Capstone ID for for the initial mode
+	uc int // Unicorn ID for the initial mode
+	cs int // Capstone ID for for the initial mode
 }
 
 type archConstructor func(mode string) (Architecture, error)

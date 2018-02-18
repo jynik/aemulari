@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	cs "github.com/bnagy/gapstone"
+	cs "github.com/lunixbochs/capstr"
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
 )
 
@@ -15,7 +15,7 @@ import (
 type Debugger struct {
 	arch   Architecture
 	mu     uc.Unicorn     // Unicorn emulator handle
-	cs     cs.Engine      // Capstone disassembly engine handle
+	cs     *cs.Engine     // Capstone disassembly engine handle
 	cfg    DebuggerConfig // Configuration settings
 	mapped MemRegions     // Mapped memory regions
 	step   codeStep       // Code stepping metadata
@@ -142,7 +142,7 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 	}
 
 	// TODO customize invalid instruction handling
-	d.cs.SkipDataStart(nil)
+	//d.cs.SkipDataStart(nil)
 
 	// Load memory regions
 	d.mapped = make(MemRegions)
@@ -540,14 +540,14 @@ func (d *Debugger) DisassembleAt(addr uint64, count uint64) ([]Disassembly, erro
 	if code, err := d.ReadMem(addr, len); err != nil {
 		return ret, nil
 	} else {
-		if instrs, err := d.cs.Disasm(code, addr, count); err == nil {
+		if instrs, err := d.cs.Dis(code, addr, count); err == nil {
 			for _, instr := range instrs {
 				var entry Disassembly
-				entry.AddressU64 = uint64(instr.Address)
-				entry.Address = fmt.Sprintf("%08x", instr.Address)
-				entry.Opcode = hex.EncodeToString(instr.Bytes)
-				entry.Mnemonic = instr.Mnemonic
-				entry.Operands = instr.OpStr
+				entry.AddressU64 = instr.Addr()
+				entry.Address = fmt.Sprintf("%08x", instr.Addr())
+				entry.Opcode = hex.EncodeToString(instr.Bytes())
+				entry.Mnemonic = instr.Mnemonic()
+				entry.Operands = instr.OpStr()
 				ret = append(ret, entry)
 			}
 		}

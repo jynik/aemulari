@@ -10,15 +10,13 @@ TODO: Overview
         * [libunicorn Go bindings]
     * [Capstone] - Disassembly Framework
         * libcapstone.so.1
-        * Go bindings: [gapstone]
-            * TODO: Migrate to [capstr]
+        * Go bindings: [capstr]
     * [gocui] - Console UI library
 
 [Unicorn]: https://github.com/unicorn-engine/unicorn
 [libunicorn Go bindings]: https://github.com/unicorn-engine/unicorn/tree/master/bindings/go
 
 [Capstone]: https://github.com/aquynh/capstone
-[gapstone]: https://github.com/bnagy/gapstone
 [capstr]: https://github.com/lunixbochs/capstr
 
 [gocui]: https://github.com/jroimartin/gocui
