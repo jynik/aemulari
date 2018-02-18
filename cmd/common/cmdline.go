@@ -1,7 +1,6 @@
 package common
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"strings"
@@ -67,19 +66,6 @@ func handleArchitecture(cfg *ae.DebuggerConfig) (ae.Architecture, error) {
 	return ret, err
 }
 
-func handleMem(cfg *ae.DebuggerConfig) error {
-	var err error = nil
-
-	haveCodeRegion := args.mem.Contains("code")
-	if !haveCodeRegion {
-		return errors.New("A memory mapped region named \"code\" must be provided.")
-	}
-
-	cfg.Mem = args.mem
-
-	return err
-}
-
 func InitCommonFlags() {
 	memRegionUsage := "<name>:<addr>:<size>:[permissions]:[input file]:[output file]"
 
@@ -106,9 +92,6 @@ func Parse() (ae.Architecture, ae.DebuggerConfig, error) {
 		return arch, cfg, err
 	}
 
-	if err = handleMem(&cfg); err != nil {
-		return arch, cfg, err
-	}
-
+	cfg.Mem = args.mem
 	return arch, cfg, nil
 }

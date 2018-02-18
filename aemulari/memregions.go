@@ -22,7 +22,7 @@ func (regions MemRegions) String() string {
 // Return true if `regions` contains a region named `name`
 func (regions MemRegions) Contains(name string) bool {
 	m := regions[name]
-	return m.name == ""
+	return m.name != ""
 }
 
 // Create a MemRegion from specification `s` and add it to `regions`
