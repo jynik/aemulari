@@ -63,7 +63,6 @@ func (b *Breakpoint) hit(addr uint64) bool {
 	}
 
 	if b.state <= breakpointInvalid || b.state >= breakpointMax {
-		log.Warning(fmt.Sprintf("BP is in valid state (%d)", b.state))
 		return false
 	}
 

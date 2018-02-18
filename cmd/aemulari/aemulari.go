@@ -7,8 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/op/go-logging"
-
 	ae "../../aemulari"
 	"../common"
 )
@@ -22,12 +20,10 @@ type Flags struct {
 func initFlags(f *Flags) {
 	f.dumpMem = make(ae.MemRegions)
 
-	flag.Int64Var(&f.count, "n", -1, "Execute only the specified number of instructions.")
+	flag.Int64Var(&f.count, "n", 0, "Execute only the specified number of instructions.")
 	flag.BoolVar(&f.showRegs, "R", false, "Show register values after execution.")
 	flag.Var(&f.dumpMem, "M", "Show specified memory regoin after execution.")
 }
-
-var log = logging.MustGetLogger("")
 
 var linesep string = strings.Repeat("-", 80)
 
@@ -58,20 +54,18 @@ func main() {
 	var flags Flags
 	var exception ae.Exception
 
-	common.InitLogging()
-
 	common.InitCommonFlags()
 	initFlags(&flags)
 
 	arch, cfg, err := common.Parse()
 	if err != nil {
-		log.Error(err)
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}
 
 	dbg, err := ae.NewDebugger(arch, cfg)
 	if err != nil {
-		log.Error(err)
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}
 
@@ -81,7 +75,7 @@ func main() {
 		exception, err = dbg.Step(flags.count)
 	}
 	if err != nil {
-		log.Error(err)
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 	}
 
 	if exception.Occurred() {
@@ -92,7 +86,7 @@ func main() {
 	if flags.showRegs {
 		rvs, err := dbg.ReadRegAll()
 		if err != nil {
-			log.Error(err)
+			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		} else {
 			fmt.Println()
 			PrintRegisters(rvs)
@@ -104,7 +98,7 @@ func main() {
 		base, size := m.Region()
 		data, err := dbg.ReadMem(base, size)
 		if err != nil {
-			log.Error(err)
+			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 			break
 		} else {
 			PrintMemory(m.Name(), base, data)

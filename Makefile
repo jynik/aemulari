@@ -1,6 +1,6 @@
 GO ?= go
 
-DEPS := .deps/unicorn .deps/gapstone .deps/gocui .deps/gologging
+DEPS := .deps/unicorn .deps/gapstone .deps/gocui
 SRC  := $(wildcard aemulari/*.go)
 BIN  := bin/aemulari bin/aemulari-gui
 
@@ -28,10 +28,6 @@ bin/aemulari-gui: ./cmd/aemulari-gui/aemulari-gui.go $(SRC) $(DEPS) bin
 
 .deps/gocui: .deps
 	$(GO) get -u github.com/jroimartin/gocui
-	@touch $@
-
-.deps/gologging: .deps
-	$(GO) get -u github.com/op/go-logging
 	@touch $@
 
 test-asm:

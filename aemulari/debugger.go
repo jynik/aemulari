@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 
 	cs "github.com/bnagy/gapstone"
-	"github.com/op/go-logging"
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
 )
 
@@ -68,8 +67,6 @@ type codeStep struct {
 	// due to a Unicorn defect, or our own misuse of the framework
 	regs []Register
 }
-
-var log = logging.MustGetLogger("")
 
 // Create a Debugger using the provided Architecture and DebuggerConfig.
 func NewDebugger(a Architecture, c DebuggerConfig) (*Debugger, error) {
@@ -151,13 +148,10 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 	d.mapped = make(MemRegions)
 	for _, m := range d.cfg.Mem {
 		if err = d.Map(m); err != nil {
-			log.Debugf("Failed to map %s", m)
 			return d.closeAll(err)
 		} else if m.name == "code" && m.perms.Exec {
 			haveCode = true
 		}
-
-		log.Debugf("Mapped %s", m)
 	}
 
 	if !haveCode {
@@ -167,7 +161,6 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 	// Load default register values
 	var loadedPc bool = false
 	for _, r := range d.cfg.Regs {
-		log.Debugf("Loading %s", r)
 		if r.attr.pc {
 			loadedPc = true
 			r.Value = d.arch.initialPC(r.Value)
@@ -445,8 +438,6 @@ func (d *Debugger) Step(count int64) (Exception, error) {
 	d.step.count = count
 	d.exInfo.last = Exception{}
 
-	log.Debugf("Stepping %d instructions.", d.step.count)
-
 	pc, err := d.pc()
 	if err != nil {
 		return d.exInfo.last, err
@@ -489,29 +480,14 @@ func (d *Debugger) Continue() (Exception, error) {
 func (h *codeStep) cb(mu uc.Unicorn, addr uint64, size uint32) {
 	d := h.dbg
 
-	log.Debugf("Code step hook @ 0x%08x (%d), countdown=%d", addr, size, d.step.count)
-
 	breakpointTriggered := d.bps.process(addr)
-	if breakpointTriggered {
-		log.Debugf("Breakpoint triggered @ 0x%08x", addr)
-	}
 
 	if breakpointTriggered || d.step.count == 0 {
-		var err error
-
 		// The state of PC and status registers (e.g., ARM CPSR) will change
 		// after calling mu.Stop(). Back them up and restore them for the next
 		// time we start.
-		d.step.regs, err = d.ReadRegAll()
-		if err != nil {
-			log.Errorf("Failed to backup registers: %s", err)
-		}
-
-		if err = mu.Stop(); err != nil {
-			log.Errorf("Failed to halt execution: %s", err)
-		} else {
-			log.Debugf("Stopping execution @ 0x%08x", addr)
-		}
+		d.step.regs, _ = d.ReadRegAll()
+		mu.Stop()
 	} else if d.step.count > 0 {
 		d.step.count -= 1
 	}
