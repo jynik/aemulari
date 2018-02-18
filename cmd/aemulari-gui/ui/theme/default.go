@@ -20,7 +20,7 @@ const immediateColor = 48
 const cmdSuccessColor = 70
 const cmdErrorColor = errorColor
 const breakpointColor = 124
-const currentInstrColor = 80
+const currentInstrColor = 48
 
 func CreateDefaultTheme(regNames *regexp.Regexp) (theme DefaultTheme) {
 	theme.regNames = regNames
