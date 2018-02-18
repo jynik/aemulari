@@ -49,6 +49,19 @@ func (ui Ui) getBpSymbolAt(addr uint64) string {
 	return ui.theme.DisabledBreakpointSymbol()
 }
 
+func (ui Ui) getPcSymbolAt(addr uint64) string {
+	if addr == ui.pc {
+		return ui.theme.CurrentInstructionSymbol()
+	}
+	return " "
+}
+
+func (ui Ui) getLineAnnotations(addr uint64) string {
+	annotations := ui.getBpSymbolAt(addr)
+	annotations += ui.getPcSymbolAt(addr)
+	return annotations
+}
+
 func (ui *Ui) updateDisasmView(view *gocui.View) error {
 	var err error
 	var line string
@@ -82,15 +95,7 @@ func (ui *Ui) updateDisasmView(view *gocui.View) error {
 	view.Clear()
 
 	for i, e := range ui.disasm.curr.entries {
-		var annotation string
-
-		if e.AddressU64 == ui.pc {
-			annotation = ui.theme.CurrentInstructionSymbol()
-		} else {
-			annotation = " "
-		}
-
-		annotation += ui.getBpSymbolAt(e.AddressU64)
+		annotation := ui.getLineAnnotations(e.AddressU64)
 
 		if e.Equals(ui.disasm.prev.entries[i]) {
 			// FIXME Get this from ui.dbg

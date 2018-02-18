@@ -66,15 +66,15 @@ func (d DefaultTheme) ColorOperands(operands string) string {
 }
 
 func (d DefaultTheme) ArmedBreakpointSymbol() string {
-	return colorizeFg(breakpointColor, "⚫")
+	return colorizeFg(breakpointColor, "B")
 }
 
 func (d DefaultTheme) DisabledBreakpointSymbol() string {
-	return colorizeFg(breakpointColor, "⚪")
+	return colorizeFg(breakpointColor, "b")
 }
 
 func (d DefaultTheme) CurrentInstructionSymbol() string {
-	return colorizeFg(currentInstrColor, "⯈")
+	return colorizeFg(currentInstrColor, ">")
 }
 
 func (d DefaultTheme) ColorModifiedInstruction(line string) string {
@@ -82,15 +82,15 @@ func (d DefaultTheme) ColorModifiedInstruction(line string) string {
 }
 
 func (d DefaultTheme) CmdPrompt() string {
-	return "æ❱ "
+	return "> "
 }
 
 func (d DefaultTheme) CmdSuccessSymbol() string {
-	return colorizeFg(cmdSuccessColor, "✔")
+	return colorizeFg(cmdSuccessColor, "+")
 }
 
 func (d DefaultTheme) CmdFailureSymbol() string {
-	return colorizeFg(errorColor, "✗")
+	return colorizeFg(errorColor, "x")
 }
 
 func (d DefaultTheme) ErrorMessage(e error) string {
