@@ -56,6 +56,7 @@ func PrintMemory(name string, addr uint64, data []byte) {
 func main() {
 	var ret int = 0
 	var flags Flags
+	var exception ae.Exception
 
 	common.InitLogging()
 
@@ -74,7 +75,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	exception, err := dbg.Step(flags.count)
+	if flags.count < 1 {
+		exception, err = dbg.Continue()
+	} else {
+		exception, err = dbg.Step(flags.count)
+	}
 	if err != nil {
 		log.Error(err)
 	}
