@@ -1,111 +1,48 @@
 package main
 
 import (
-	"encoding/hex"
-	"flag"
+	"path/filepath"
 	"fmt"
 	"os"
-	"strings"
+	//"strings"
 
-	ae "../../aemulari"
-	"../common"
+	//ae "../../aemulari"
+	"../cmdline"
 )
 
-type Flags struct {
-	count    int64         // Instruction count
-	showRegs bool          // Show register values after execution
-	dumpMem  ae.MemRegions // Memory regions to display after execution
-}
+const version = "v0.1.0"
 
-func initFlags(f *Flags) {
-	f.dumpMem = make(ae.MemRegions)
-
-	flag.Int64Var(&f.count, "n", 0, "Execute only the specified number of instructions.")
-	flag.BoolVar(&f.showRegs, "R", false, "Show register values after execution.")
-	flag.Var(&f.dumpMem, "M", "Show specified memory regoin after execution.")
-}
-
-var linesep string = strings.Repeat("-", 80)
-
-func PrintRegisters(regs []ae.Register) {
-	var reg ae.Register
-	var i int
-
-	fmt.Println(" Registers\n" + linesep)
-	for i, reg = range regs {
-		fmt.Printf("%s    ", &reg)
-		if (i+1)%3 == 0 {
-			fmt.Println()
-		}
-	}
-
-	if (i+1)%3 != 0 {
-		fmt.Println()
-	}
-	fmt.Println()
-}
-
-func PrintMemory(name string, addr uint64, data []byte) {
-	fmt.Printf(" Memory at 0x%08x (%s)\n%s\n%s\n", addr, name, linesep, hex.Dump(data))
-}
+var usageText string = "" +
+	"aemulari - Batch execution of the aemulari debugger (" + version + ")\n" +
+	"Usage: %s [options]\n" +
+	"\n" +
+	"Options:\n" +
+	cmdline.FlagStr_arch +
+	cmdline.FlagStr_regs +
+	cmdline.FlagStr_mem +
+	cmdline.FlagStr_breakpoint +
+	cmdline.FlagStr_printRegs +
+	cmdline.FlagStr_printHexdump +
+	cmdline.FlagStr_help +
+	cmdline.Details_arch +
+	cmdline.Details_mem +
+	cmdline.Notes +
+	" + Execution terminates when an exception occurs or a when breakpoint is hit.\n" +
+	"\n"
 
 func main() {
-	var ret int = 0
-	var flags Flags
-	var exception ae.Exception
+	params := cmdline.ArgList{ cmdline.Arg_arch }
 
-	common.InitCommonFlags()
-	initFlags(&flags)
+	if cmdline.HelpRequested(os.Args) {
+		fmt.Printf(usageText, filepath.Base(os.Args[0]))
+		os.Exit(0)
+	}
 
-	arch, cfg, err := common.Parse()
+	args, err := params.Parse(os.Args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	dbg, err := ae.NewDebugger(arch, cfg)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-		os.Exit(1)
-	}
 
-	if flags.count < 1 {
-		exception, err = dbg.Continue()
-	} else {
-		exception, err = dbg.Step(flags.count)
-	}
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-	}
-
-	if exception.Occurred() {
-		fmt.Println("Execution halted due to exception: " + exception.String())
-	}
-
-	// Print final register state, if requested
-	if flags.showRegs {
-		rvs, err := dbg.ReadRegAll()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-		} else {
-			fmt.Println()
-			PrintRegisters(rvs)
-		}
-	}
-
-	// Print final state of memory regions, if requested
-	for _, m := range flags.dumpMem {
-		base, size := m.Region()
-		data, err := dbg.ReadMem(base, size)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-			break
-		} else {
-			PrintMemory(m.Name(), base, data)
-		}
-	}
-
-	// Ensure output files are written
-	dbg.Close()
-	os.Exit(ret)
 }

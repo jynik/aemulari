@@ -205,7 +205,7 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 	return nil
 }
 
-// Deinitialize a Debugger and unmap memory regions, writing their contents
+// Deinitialize the Debugger and unmap memory regions, writing their contents
 // to output files if configured to do so.
 func (d *Debugger) Close() error {
 	var ret error = nil
