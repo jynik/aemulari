@@ -2,6 +2,7 @@ package cmdline
 
 import (
 	"fmt"
+	"strconv"
 )
 
 // Flag value requirement, if any
@@ -34,16 +35,32 @@ func (a *Arg) Name() string {
 }
 
 // Mapping of flag name to list of arguments associated with it
-type ArgMap map[string][]string
+type argMap map[string][]string
 
-func (m *ArgMap) Get(name string) []string {
+func (m *argMap) getString(name, default_val string) string {
 	if val, exists := (*m)[name]; exists {
-		return val
+		if len(val) != 1 {
+			panic("Bug - using getString() for multi-value option")
+		}
+		return val[0]
 	} else {
-		return []string{ "" }
+		return default_val
 	}
 }
 
+func (m *argMap) getU64List(name string) ([]uint64, error) {
+	ret := []uint64{}
+
+	for _, s := range (*m)[name] {
+		if val, err := strconv.ParseUint(s, 0, 64); err != nil {
+			return []uint64{}, fmt.Errorf("%s", s)
+		} else {
+			ret = append(ret, val)
+		}
+	}
+
+	return ret, nil
+}
 
 type SupportedArgs []*Arg
 
@@ -64,41 +81,71 @@ func (s *SupportedArgs) lookup(flag string) *Arg {
 
 // Parse command line arguments and separate them into their
 // associated flags.
-func (l *SupportedArgs) parse(args []string) (ArgMap, error) {
-	var ret ArgMap = make(ArgMap)
+func (l *SupportedArgs) parse(args []string) (argMap, error) {
+	var ret argMap = make(argMap)
 	var err error
 	var arg string
 
 	for i := 0; i < len(args); i++ {
 		flag := l.lookup(args[i])
 		if flag == nil {
-			return ret, fmt.Errorf("Invalid flag provided: %s", args[i])
+			return ret, fmt.Errorf("Invalid option provided: %s", args[i])
 		}
 
-		i++
-		if i < len(args) {
-			arg = args[i]
+		flagName := fmt.Sprintf("%s/%s", flag.Short, flag.Long)
+
+		if i+1 < len(args) {
+			arg = args[i+1]
 		} else {
 			arg = ""
 		}
 
+		// Test our argument value requirements
 		switch flag.ValueReqt {
 		case None:
 			if len(arg) != 0 && l.lookup(arg) != nil {
-				return ret, fmt.Errorf("The %s/%s flag does not take an argument.", flag.Short, flag.Long)
+				return ret, fmt.Errorf("The %s option does not take an argument.", flagName)
 			}
 		case Required:
 			if len(arg) == 0 || l.lookup(arg) != nil {
-				return ret, fmt.Errorf("The %s/%s flag requires an argument.", flag.Short, flag.Long)
+				return ret, fmt.Errorf("The %s option requires an argument.", flagName)
 			}
+			i += 1
 		case Optional:
 			if len(arg) != 0 && l.lookup(arg) != nil {
 				// Zap this, it's not really an arg
 				arg = ""
+			} else {
+				i += 1
 			}
 		}
 
+		// Enforce value whitelist
+		if len(arg) != 0 && len(flag.ValidValues) != 0 {
+			valid := false
+			for _, val := range flag.ValidValues {
+				if arg == val {
+					valid = true
+					break
+				}
+			}
+			if !valid {
+				return ret, fmt.Errorf("Invalid value for %s option: %s", flagName, arg)
+			}
+		}
 
+		// Enforce any occurrance restrictions
+		values, alreadyPresent := ret[flag.Name()]
+		if alreadyPresent {
+			if flag.Occurrence == Once {
+				return ret, fmt.Errorf("The %s option may not be specified more than once.", flagName)
+			}
+
+			values = append(values, arg)
+			ret[flag.Name()] = values
+		} else {
+			ret[flag.Name()] = []string{ arg }
+		}
 	}
 
 	return ret, err

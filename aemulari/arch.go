@@ -3,6 +3,7 @@ package aemulari
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // Processor type ID
@@ -76,14 +77,29 @@ type Architecture interface {
 }
 
 // Obtain an implementation of the Architecture interface for
-// the specified architecture type (`arch`). The `initialMode`
-// may be used to set the initial mode of the processor, or can
-// be left empty to use the default.
-func NewArchitecture(arch, initialMode string) (Architecture, error) {
+// the specified processor type, and optionally, initial mode:
+//
+// Examples:
+//		arch, err := NewArchitecture("arm")
+//		arch, err := NewArchitecture("arm:arm")
+//		arch, err := NewArchitecture("arm:thumb")
+func NewArchitecture(arch string) (Architecture, error) {
+	var mode string
+
+	fields := strings.Split(arch, ":")
+	arch = fields[0]
+
+	if len(fields) > 1 {
+		mode = fields[1]
+	} else {
+		mode = ""
+	}
+
+
 	if ret, found := archMap[arch]; !found {
 		return nil, fmt.Errorf("Unsupported architecture: %s", arch)
 	} else {
-		return ret(initialMode)
+		return ret(mode)
 	}
 }
 

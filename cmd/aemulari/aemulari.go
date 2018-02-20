@@ -1,9 +1,6 @@
 package main
 
 import (
-	"path/filepath"
-	"fmt"
-	"os"
 	//"strings"
 
 	//ae "../../aemulari"
@@ -27,22 +24,18 @@ var usageText string = "" +
 	cmdline.Details_arch +
 	cmdline.Details_mem +
 	cmdline.Notes +
-	" + Execution terminates when an exception occurs or a when breakpoint is hit.\n" +
+	" - Execution terminates when an exception occurs or a when breakpoint is hit.\n" +
 	"\n"
 
 func main() {
-	params := cmdline.ArgList{ cmdline.Arg_arch }
-
-	if cmdline.HelpRequested(os.Args) {
-		fmt.Printf(usageText, filepath.Base(os.Args[0]))
-		os.Exit(0)
+	supportedArgs := cmdline.SupportedArgs{
+		cmdline.Arg_arch,
+		cmdline.Arg_reg,
+		cmdline.Arg_mem,
+		cmdline.Arg_breakpoint,
+		cmdline.Arg_printRegs,
+		cmdline.Arg_hexdump,
 	}
 
-	args, err := params.Parse(os.Args)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-
+	cmdline.Parse(supportedArgs, usageText)
 }

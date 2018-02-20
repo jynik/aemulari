@@ -22,10 +22,10 @@ const Details_mem = "" +
 	"  - An executable region named \"code\" is required.\n" +
 	"  - Only the <name>, <address>, and <size> fields are required. When including\n" +
 	"      an optional field, all preceding optional fields must be specified well.\n" +
-	"  - The [:perms] field specifies the access permissions of a region using the\n" +
+	"  - The [perms] field specifies the access permissions of a region using the\n" +
 	"      characters 'r', 'w', and 'x' for read, write, and execute, respectively.\n" +
 	"  - If specified, the contents of [input file] will be loaded into the region.\n" +
-	"  - If specified, a memory region's contents will be written to <output file>.\n"
+	"  - If specified, a memory region's contents will be written to [output file].\n"
 
 const FlagStr_regs = "" +
 	"  -r, --reg <name>=<value>    Assigns the initial value of a register.\n"
