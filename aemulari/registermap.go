@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+// A representation of a processor's registers. This provide access to
+// registers' attributes, by register name.
 type registerMap struct {
 	regList []*registerAttr          // Sorted by register name
 	regMap  map[string]*registerAttr // Random access
@@ -25,6 +27,7 @@ func (r *registerMap) add(names []string, reg *registerAttr) {
 	}
 }
 
+// Retrieve register attributes for a register named `name`
 func (rm *registerMap) register(name string) (*registerAttr, error) {
 	if reg, found := rm.regMap[name]; found {
 		return reg, nil
@@ -33,6 +36,7 @@ func (rm *registerMap) register(name string) (*registerAttr, error) {
 	return nil, fmt.Errorf("\"%s\" is not a valid register name.", name)
 }
 
+// Return attributes for every register in the register map
 func (rm *registerMap) registers() []*registerAttr {
 	count := len(rm.regList)
 	regs := make([]*registerAttr, count, count)
@@ -40,6 +44,8 @@ func (rm *registerMap) registers() []*registerAttr {
 	return regs
 }
 
+// Parse a register initialization string in the form "<name>=<value>"
+// and return an associated Register object
 func (rm *registerMap) ParseRegister(s string) (Register, error) {
 	var reg Register
 	fields := strings.Split(strings.ToLower(strings.Trim(s, "\r\n\t ")), "=")
@@ -59,6 +65,7 @@ func (rm *registerMap) ParseRegister(s string) (Register, error) {
 	return reg, err
 }
 
+// This is a wrapper around calls to registerMap.ParseRegister()
 func (rm *registerMap) ParseRegisters(strs []string) ([]Register, error) {
 	var ret []Register
 
@@ -73,6 +80,7 @@ func (rm *registerMap) ParseRegisters(strs []string) ([]Register, error) {
 	return ret, nil
 }
 
+// Return a regular expression that matches register names
 func (rm *registerMap) RegisterRegexp() *regexp.Regexp {
 	restr := "(^|[^[:alpha:]])("
 
