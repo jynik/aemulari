@@ -36,15 +36,19 @@ func Parse(supported SupportedArgs, usage string) (*ae.Architecture, *ae.Debugge
 		os.Exit(1)
 	}
 
-	// Aggregate and convert breakpoints
-	_, err = args.getU64List("break")
+	// Aggregate and convert breakpoints to uint64 addresses
+	breakpoints, err := args.getU64List("break")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid breakpoint address encountered: %s\n", err)
 		os.Exit(1)
 	}
 
 	// Aggregate memory regions
-
+	dbgCfg.Mem, err = ae.NewMemRegionSet(args["mem"])
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	// Determine which architecture we're emulating
 	arch, err := ae.NewArchitecture(args.getString("arch", "arm"))
@@ -60,5 +64,16 @@ func Parse(supported SupportedArgs, usage string) (*ae.Architecture, *ae.Debugge
 		os.Exit(1)
 	}
 
-	return nil, nil
+	// Create the debugger and set any initial breakpoints
+	dbg, err := ae.NewDebugger(arch, dbgCfg)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	for _, b := range breakpoints {
+		dbg.SetBreakpoint(b)
+	}
+
+	return &arch, dbg
 }
