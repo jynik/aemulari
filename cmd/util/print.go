@@ -2,12 +2,13 @@ package util
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strings"
 
 	ae "../../aemulari"
 )
 
-const LineSeparator string = strings.Repeat("-", 80)
+var linesep string = strings.Repeat("-", 80)
 
 func PrettyPrintRegisters(regs []ae.Register) {
 	var reg ae.Register
@@ -30,7 +31,7 @@ func PrettyPrintRegisters(regs []ae.Register) {
 func PrintHexDump(header string, addr uint64, data []byte) {
 	if len(header) != 0 {
 		fmt.Println(header)
-		fmt.Println(LineSeparator)
+		fmt.Println(linesep)
 	}
 
 	fmt.Println(hex.Dump(data))

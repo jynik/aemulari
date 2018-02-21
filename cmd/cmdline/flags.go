@@ -2,7 +2,6 @@ package cmdline
 
 import (
 	"fmt"
-	"strconv"
 )
 
 // Flag value requirement, if any
@@ -13,7 +12,7 @@ const (
 	Required	// The flag requires a value
 )
 
-// Flag occurrence constraint
+// Flag occurrence constraints
 type Occurrence int
 
 const (
@@ -21,55 +20,31 @@ const (
 	Once				 // Flag must occur only once
 )
 
-type Arg struct {
+// Command line flag attributes and constraints
+type Flag struct {
 	Short      string     // Short form of flag
 	Long       string     // Long form of flag
 	ValueReqt  ValueReqt  // Is there value? Is it required or optional?
 	Occurrence Occurrence // Can this argument occur multiple times or just once?
 	ValidValues []string  // Only values in this list are permitted, if non-empty
-	Value      string     // Value provided on the command line
 }
 
-func (a *Arg) Name() string {
-	return a.Long[2:]
+// Return a command line flag's name, which is derived from it's long form
+func (f *Flag) Name() string {
+	return f.Long[2:]
 }
 
-// Mapping of flag name to list of arguments associated with it
-type argMap map[string][]string
+// This type is used to maintain a list of flags supported by the program
+type SupportedFlags []*Flag
 
-func (m *argMap) getString(name, default_val string) string {
-	if val, exists := (*m)[name]; exists {
-		if len(val) != 1 {
-			panic("Bug - using getString() for multi-value option")
-		}
-		return val[0]
-	} else {
-		return default_val
-	}
-}
-
-func (m *argMap) getU64List(name string) ([]uint64, error) {
-	ret := []uint64{}
-
-	for _, s := range (*m)[name] {
-		if val, err := strconv.ParseUint(s, 0, 64); err != nil {
-			return []uint64{}, fmt.Errorf("%s", s)
-		} else {
-			ret = append(ret, val)
-		}
-	}
-
-	return ret, nil
-}
-
-type SupportedArgs []*Arg
-
-func (s *SupportedArgs) Add(a *Arg) *SupportedArgs {
-	*s = append(*s, a)
+// Add a Flag to the list to the list of supported options
+func (s *SupportedFlags) Add(f *Flag) *SupportedFlags{
+	*s = append(*s, f)
 	return s
 }
 
-func (s *SupportedArgs) lookup(flag string) *Arg {
+// Retrieve a Flag by its short or long form
+func (s *SupportedFlags) lookup(flag string) *Flag {
 	for _, elt := range *s {
 		if flag == elt.Short || flag == elt.Long {
 			return elt
@@ -80,9 +55,11 @@ func (s *SupportedArgs) lookup(flag string) *Arg {
 }
 
 // Parse command line arguments and separate them into their
-// associated flags.
-func (l *SupportedArgs) parse(args []string) (argMap, error) {
-	var ret argMap = make(argMap)
+// associated flags, reporting any misuse as an error.
+//
+// Returns a FlagMap on success, which
+func (l *SupportedFlags) parse(args []string) (FlagMap, error) {
+	var ret FlagMap = make(FlagMap)
 	var err error
 	var arg string
 
@@ -134,7 +111,7 @@ func (l *SupportedArgs) parse(args []string) (argMap, error) {
 			}
 		}
 
-		// Enforce any occurrance restrictions
+		// Enforce any occurrence restrictions
 		values, alreadyPresent := ret[flag.Name()]
 		if alreadyPresent {
 			if flag.Occurrence == Once {
@@ -150,4 +127,3 @@ func (l *SupportedArgs) parse(args []string) (argMap, error) {
 
 	return ret, err
 }
-

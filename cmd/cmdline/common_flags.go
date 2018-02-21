@@ -1,34 +1,41 @@
 package cmdline
 
-var Arg_arch *Arg = &Arg{
+var Flag_arch *Flag = &Flag{
 	Short:      "-a",
 	Long:       "--arch",
 	Occurrence: Once,
 	ValueReqt:       Required,
 }
 
-var Arg_reg *Arg = &Arg{
+var Flag_reg *Flag = &Flag{
 	Short:      "-r",
 	Long:       "--reg",
 	Occurrence: Multiple,
 	ValueReqt:       Required,
 }
 
-var Arg_mem *Arg = &Arg{
+var Flag_mem *Flag = &Flag{
 	Short:      "-m",
 	Long:       "--mem",
 	Occurrence: Multiple,
 	ValueReqt:		Required,
 }
 
-var Arg_breakpoint *Arg = &Arg{
+var Flag_instrcount *Flag = &Flag {
+	Short: "-n",
+	Long: "--instr-count",
+	Occurrence: Once,
+	ValueReqt: Required,
+}
+
+var Flag_breakpoint *Flag = &Flag{
 	Short: "-b",
 	Long: "--break",
 	Occurrence: Multiple,
 	ValueReqt: Required,
 }
 
-var Arg_printRegs *Arg = &Arg{
+var Flag_printRegs *Flag = &Flag{
 	Short: "-R",
 	Long: "--print-regs",
 	Occurrence: Once,
@@ -36,7 +43,7 @@ var Arg_printRegs *Arg = &Arg{
 	ValidValues: []string{ "pretty", "list" },
 }
 
-var Arg_hexdump *Arg = &Arg{
+var Flag_hexdump *Flag = &Flag{
 	Short: "-d",
 	Long: "--hexdump",
 	Occurrence: Once,
