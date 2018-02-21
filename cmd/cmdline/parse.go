@@ -23,6 +23,8 @@ func helpRequested() bool {
 // Configures and returns an Architecture and Debugger on success.
 // Prints errors to stderr and exits the program on failure.
 func Parse(supported SupportedArgs, usage string) (*ae.Architecture, *ae.Debugger) {
+	var dbgCfg ae.DebuggerConfig
+
 	if helpRequested() || len(os.Args) == 1 {
 		fmt.Printf(usage, filepath.Base(os.Args[0]))
 		os.Exit(0)
@@ -35,13 +37,14 @@ func Parse(supported SupportedArgs, usage string) (*ae.Architecture, *ae.Debugge
 	}
 
 	// Aggregate and convert breakpoints
-	breakpoints, err := args.getU64List("break")
+	_, err = args.getU64List("break")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid breakpoint address encountered: %s\n", err)
 		os.Exit(1)
 	}
 
 	// Aggregate memory regions
+
 
 	// Determine which architecture we're emulating
 	arch, err := ae.NewArchitecture(args.getString("arch", "arm"))
@@ -51,7 +54,7 @@ func Parse(supported SupportedArgs, usage string) (*ae.Architecture, *ae.Debugge
 	}
 
 	// Parse user-provided initial register values for the configured architecture
-	_, err = arch.ParseRegisters(args["regs"])
+	dbgCfg.Regs, err = arch.ParseRegisters(args["regs"])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

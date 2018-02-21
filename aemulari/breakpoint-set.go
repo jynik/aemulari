@@ -2,21 +2,22 @@ package aemulari
 
 import "sort"
 
-// Maps an address to one or more breakpoints at that address.
-// In the future, I'd like to have conditional breakpoints, hence multiple bps at one address.
-type breakpoints struct {
+// A set of breakpoints, accessible by unique ID or the address at which
+// they're placed. In the future, I'd like to have conditional breakpoints,
+// hence multiple bps at one address.
+type breakpointSet struct {
 	nextId int                      // Monotonically increasing
 	byAddr map[uint64][]*Breakpoint // Address -> BP's at that address
 	byID   map[int]*Breakpoint      // ID -> BP
 }
 
-func (bps *breakpoints) initialize() {
+func (bps *breakpointSet) initialize() {
 	bps.nextId = 1
 	bps.byAddr = make(map[uint64][]*Breakpoint)
 	bps.byID = make(map[int]*Breakpoint)
 }
 
-func (bps *breakpoints) add(addr uint64) Breakpoint {
+func (bps *breakpointSet) add(addr uint64) Breakpoint {
 	id := bps.nextId
 	bps.nextId++
 
@@ -34,7 +35,7 @@ func (bps *breakpoints) add(addr uint64) Breakpoint {
 }
 
 // Returns true if any BPs at `addr` were triggered
-func (bps *breakpoints) process(addr uint64) bool {
+func (bps *breakpointSet) process(addr uint64) bool {
 	var anyTriggered bool = false
 
 	for _, bp := range bps.byID {
@@ -54,12 +55,12 @@ func (bps *breakpoints) process(addr uint64) bool {
 }
 
 // Remove all breakpoints
-func (bps *breakpoints) removeAll() {
+func (bps *breakpointSet) removeAll() {
 	bps.initialize()
 }
 
 // Remove all breakpoints at the specified address
-func (bps *breakpoints) removeAllAt(addr uint64) {
+func (bps *breakpointSet) removeAllAt(addr uint64) {
 	if byAddr, present := bps.byAddr[addr]; present {
 		for _, bp := range byAddr {
 			delete(bps.byID, bp.ID)
@@ -70,7 +71,7 @@ func (bps *breakpoints) removeAllAt(addr uint64) {
 }
 
 // Remove the breakpoint associated with the specified Id
-func (bps *breakpoints) remove(id int) {
+func (bps *breakpointSet) remove(id int) {
 	if bp, present := bps.byID[id]; present {
 		if addrList, present := bps.byAddr[bp.Address]; present {
 			if len(addrList) == 1 && addrList[0].ID == id {
@@ -93,7 +94,7 @@ func (bps *breakpoints) remove(id int) {
 }
 
 // Get all breakpoints, sorted by ID
-func (bps breakpoints) get() BreakpointList {
+func (bps breakpointSet) get() BreakpointList {
 	max := len(bps.byID)
 
 	var ids []int = make([]int, max, max)
@@ -114,7 +115,7 @@ func (bps breakpoints) get() BreakpointList {
 }
 
 // Return list of breakpoints at the specified address, sorted by ID
-func (bps breakpoints) getAllAt(addr uint64) BreakpointList {
+func (bps breakpointSet) getAllAt(addr uint64) BreakpointList {
 	ptrs, present := bps.byAddr[addr]
 	if !present {
 		return BreakpointList{}
@@ -132,7 +133,6 @@ func (bps breakpoints) getAllAt(addr uint64) BreakpointList {
 
 	sort.Ints(ids)
 
-	// FIXME Yea, this is rather wasteful... :shrug:
 	i = 0
 	for _, id := range ids {
 		ret[i] = *(bps.byID[id])

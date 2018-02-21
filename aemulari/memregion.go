@@ -114,7 +114,8 @@ func (r MemRegion) IsValid() (bool, error) {
 	return true, nil
 }
 
-// Create a memory region as specified by the string `s`, of the form:
+// Create a memory region based upon the specification string `s`.
+// The syntax of this MemRegion specification string is:
 //	<name>:<addr>:<size>:[permissions]:[input file]:[output_file]
 func NewMemRegion(s string) (region MemRegion, err error) {
 	var fields []string

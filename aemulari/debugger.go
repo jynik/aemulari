@@ -17,16 +17,16 @@ type Debugger struct {
 	mu     uc.Unicorn     // Unicorn emulator handle
 	cs     *cs.Engine     // Capstone disassembly engine handle
 	cfg    DebuggerConfig // Configuration settings
-	mapped MemRegions     // Mapped memory regions
+	mapped MemRegionSet   // Mapped memory regions
 	step   codeStep       // Code stepping metadata
-	bps    breakpoints    // Breakpoint settings
+	bps    breakpointSet  // Breakpoint settings
 	exInfo exceptionInfo  // CPU Exception handling
 }
 
 // Configuration of Debugger's initial state
 type DebuggerConfig struct {
-	Regs []Register // Default register values
-	Mem  MemRegions // Memory region configuration
+	Regs []Register	  // Default register values
+	Mem  MemRegionSet // Memory region configuration
 }
 
 // A single disassembled instruction separated into its components
@@ -145,7 +145,7 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 	//d.cs.SkipDataStart(nil)
 
 	// Load memory regions
-	d.mapped = make(MemRegions)
+	d.mapped = make(MemRegionSet)
 	for _, m := range d.cfg.Mem {
 		if err = d.Map(m); err != nil {
 			return d.closeAll(err)
