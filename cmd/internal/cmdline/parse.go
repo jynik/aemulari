@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	ae "../../aemulari"
+	ae "../../../aemulari"
 )
 
 // Scan arguments for help requests

@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	ae "../../aemulari"
-	"../cmdline"
-	"../util"
+	"../internal/cmdline"
+	"../internal/util"
 )
 
 const version = "v0.1.0"
