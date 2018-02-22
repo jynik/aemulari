@@ -6,27 +6,28 @@ import (
 
 // Flag value requirement, if any
 type ValueReqt int
+
 const (
-	None = iota	// No value should accompany the flag
-	Optional	// An argument is optional with the flag
-	Required	// The flag requires a value
+	None     = iota // No value should accompany the flag
+	Optional        // An argument is optional with the flag
+	Required        // The flag requires a value
 )
 
 // Flag occurrence constraints
 type Occurrence int
 
 const (
-	Multiple = iota		 // Flag may occur multiple times
-	Once				 // Flag must occur only once
+	Multiple = iota // Flag may occur multiple times
+	Once            // Flag must occur only once
 )
 
 // Command line flag attributes and constraints
 type Flag struct {
-	Short      string     // Short form of flag
-	Long       string     // Long form of flag
-	ValueReqt  ValueReqt  // Is there value? Is it required or optional?
-	Occurrence Occurrence // Can this argument occur multiple times or just once?
-	ValidValues []string  // Only values in this list are permitted, if non-empty
+	Short       string     // Short form of flag
+	Long        string     // Long form of flag
+	ValueReqt   ValueReqt  // Is there value? Is it required or optional?
+	Occurrence  Occurrence // Can this argument occur multiple times or just once?
+	ValidValues []string   // Only values in this list are permitted, if non-empty
 }
 
 // Return a command line flag's name, which is derived from it's long form
@@ -38,7 +39,7 @@ func (f *Flag) Name() string {
 type SupportedFlags []*Flag
 
 // Add a Flag to the list to the list of supported options
-func (s *SupportedFlags) Add(f *Flag) *SupportedFlags{
+func (s *SupportedFlags) Add(f *Flag) *SupportedFlags {
 	*s = append(*s, f)
 	return s
 }
@@ -122,7 +123,7 @@ func (l *SupportedFlags) parse(args []string) (ArgMap, error) {
 			values = append(values, arg)
 			ret[flag.Name()] = values
 		} else {
-			ret[flag.Name()] = []string{ arg }
+			ret[flag.Name()] = []string{arg}
 		}
 	}
 

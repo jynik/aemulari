@@ -8,10 +8,9 @@ import (
 	ae "../../aemulari"
 )
 
-
 // Scan arguments for help requests
 func helpRequested() bool {
-	for _, arg := range(os.Args) {
+	for _, arg := range os.Args {
 		if arg == "-h" || arg == "--help" {
 			return true
 		}

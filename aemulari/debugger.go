@@ -25,7 +25,7 @@ type Debugger struct {
 
 // Configuration of Debugger's initial state
 type DebuggerConfig struct {
-	Regs []Register	  // Default register values
+	Regs []Register   // Default register values
 	Mem  MemRegionSet // Memory region configuration
 }
 

@@ -48,7 +48,6 @@ func (regions MemRegionSet) Contains(name string) bool {
 	return exists
 }
 
-
 // Retrieve the memory region named `name`
 func (regions MemRegionSet) Get(name string) (MemRegion, error) {
 	m := regions[name]

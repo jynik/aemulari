@@ -15,7 +15,7 @@ import (
 const version = "v0.1.0"
 
 type hexdumpRequest struct {
-	name	string
+	name         string
 	addr, length uint64
 }
 
@@ -62,7 +62,7 @@ func parseHexdumpRequests(args cmdline.ArgMap, dbg *ae.Debugger) ([]hexdumpReque
 	var requests []hexdumpRequest
 	for _, region := range args.GetStrings("hexdump") {
 		if dbg.IsMapped(region) {
-			requests = append(requests, hexdumpRequest{ name: region })
+			requests = append(requests, hexdumpRequest{name: region})
 		} else {
 			fields := strings.Split(region, ":")
 			if len(fields) != 2 {
@@ -78,7 +78,7 @@ func parseHexdumpRequests(args cmdline.ArgMap, dbg *ae.Debugger) ([]hexdumpReque
 				return requests, fmt.Errorf("Invalid memory region address: %s", addr)
 			}
 
-			requests = append(requests, hexdumpRequest{ addr: addr, length: length})
+			requests = append(requests, hexdumpRequest{addr: addr, length: length})
 		}
 	}
 
@@ -100,7 +100,7 @@ func print_hexdumps(regions []hexdumpRequest, dbg *ae.Debugger) {
 			addr, data, err = dbg.ReadMemRegion(r.name)
 			if err != nil {
 				f := fmt.Sprintf("Failed to read memory region named \"%s\": %s",
-						r.name, err.Error())
+					r.name, err.Error())
 				failures = append(failures, f)
 				continue
 			}
@@ -109,7 +109,7 @@ func print_hexdumps(regions []hexdumpRequest, dbg *ae.Debugger) {
 			data, err = dbg.ReadMem(addr, r.length)
 			if err != nil {
 				f := fmt.Sprintf("Failed to read %d bytes of memory at 0x%08x: %s",
-						r.length, r.addr, err.Error())
+					r.length, r.addr, err.Error())
 				failures = append(failures, f)
 				continue
 			}

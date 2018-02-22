@@ -95,7 +95,6 @@ func NewArchitecture(arch string) (Architecture, error) {
 		mode = ""
 	}
 
-
 	if ret, found := archMap[arch]; !found {
 		return nil, fmt.Errorf("Unsupported architecture: %s", arch)
 	} else {

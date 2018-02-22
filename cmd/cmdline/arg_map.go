@@ -25,7 +25,6 @@ func (m *ArgMap) GetStrings(name string) []string {
 	return (*m)[name]
 }
 
-
 // Retrieve a flag's values as a list of uint64 values
 // Upon encountering an invalid value, that value is returned as an error
 func (m *ArgMap) GetU64List(name string) ([]uint64, error) {
@@ -67,4 +66,3 @@ func (m *ArgMap) Contains(name string) bool {
 func (m *ArgMap) remove(name string) {
 	delete(*m, name)
 }
-
