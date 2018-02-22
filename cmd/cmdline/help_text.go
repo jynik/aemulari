@@ -39,7 +39,7 @@ const FlagStr_printRegs = "" +
 
 const FlagStr_printHexdump = "" +
 	"  -d, --hexdump <name>        Print a hexdump of a memory region after execution\n" +
-	"                <addr:size>    completes. The region may be specified by name or \n" +
+	"                <addr:size>    completes. The region may be specified by name or\n" +
 	"                               by an address and size.\n"
 
 const FlagStr_help = "" +

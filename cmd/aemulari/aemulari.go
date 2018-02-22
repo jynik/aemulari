@@ -35,6 +35,16 @@ var usageText string = "" +
 	cmdline.Details_mem +
 	cmdline.Notes +
 	" - Execution terminates when an exception occurs or a when breakpoint is hit.\n" +
+	"\n" +
+	"Examples:\n" +
+	"  Run myprogram.bin and then print the state of registers upon termination\n" +
+	"  caused by the breakpoint at address 0x10214 or an unexpected exception.\n" +
+	"    aemulari -m code:0x10000:0x1000:rx:./myprogram.bin -b 0x10214 -R\n" +
+	"\n" +
+	"  Execute myprogram.bin until it terminates and then write the contents of\n" +
+	"  the \"mydata\" region to a file named mydata.bin.\n" +
+	"    aemulari -m code:0x48000000:0x4000:rx:./myprogram.bin \\\n" +
+	"      -m mydata:0x80000000:0x4000:rw::./mydata.bin\n" +
 	"\n"
 
 // Output the final states of registers, if requested  to do so

@@ -69,7 +69,13 @@ func (r MemRegion) HasInputFile() bool {
 // Load data that should be used to initialize a memory region
 func (r MemRegion) LoadInputData() ([]byte, error) {
 	if r.HasInputFile() {
-		return ioutil.ReadFile(r.inputFile)
+		data, err := ioutil.ReadFile(r.inputFile)
+		if err != nil {
+			return []byte{},
+				fmt.Errorf("Failed to load data for memory region \"%s\" - %s",
+					r.name, err.Error())
+		}
+		return data, err
 	}
 	return []byte{}, nil
 }
@@ -103,8 +109,12 @@ func (r MemRegion) IsValid() (bool, error) {
 		return false, err
 	}
 
-	if _, err = os.Stat(r.inputFile); os.IsNotExist(err) {
-		return false, err
+	if len(r.inputFile) > 0 {
+		if _, err = os.Stat(r.inputFile); os.IsNotExist(err) {
+			return false,
+				fmt.Errorf("Cannot open input file for memory region \"%s\": %s",
+					r.name, err.Error())
+		}
 	}
 
 	if r.name == "code" && !r.perms.Exec {

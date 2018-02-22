@@ -428,12 +428,13 @@ func (d *Debugger) ReadMem(addr, size uint64) ([]byte, error) {
 
 // Read an entire named region of memory
 func (d *Debugger) ReadMemRegion(name string) (uint64, []byte, error) {
-	if region, isMapped := d.mapped[name]; !isMapped {
-		return 0, []byte{}, errors.New("No such mapped memory region: " + name)
-	} else {
-		data, err := d.mu.MemRead(region.base, region.size)
-		return region.base, data, err
+	region, err := d.mapped.Get(name)
+	if err != nil {
+		return 0, []byte{}, err
 	}
+
+	data, err := d.mu.MemRead(region.base, region.size)
+	return region.base, data, err
 }
 
 // Write `data` to memory at the address specified by `addr`
