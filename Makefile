@@ -5,7 +5,7 @@ CMD_COMMON := $(wildcard cmd/cmdline/*.go) $(wildcard cmd/util/*.go)
 SRC  := $(wildcard aemulari/*.go)
 BIN  := bin/aemulari bin/aemulari-gui
 
-all: bin/aemulari bin/aemulari-gui test-asm
+all: bin/aemulari bin/aemulari-gui
 
 bin:
 	@mkdir -p $@
