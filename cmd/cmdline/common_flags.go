@@ -46,6 +46,6 @@ var Flag_printRegs *Flag = &Flag{
 var Flag_hexdump *Flag = &Flag{
 	Short: "-d",
 	Long: "--hexdump",
-	Occurrence: Once,
+	Occurrence: Multiple,
 	ValueReqt: Required,
 }

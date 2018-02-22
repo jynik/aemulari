@@ -22,7 +22,7 @@ func helpRequested() bool {
 // Parse command line arguments (argv) based upon list of supported arguments.
 // Configures and returns any unhandled arguments, an Architecture, and Debugger on success.
 // Prints errors to stderr and exits the program on failure.
-func Parse(flags SupportedFlags, usage string) (FlagMap, *ae.Architecture, *ae.Debugger) {
+func Parse(flags SupportedFlags, usage string) (ArgMap, *ae.Architecture, *ae.Debugger) {
 	var dbgCfg ae.DebuggerConfig
 
 	if helpRequested() || len(os.Args) == 1 {

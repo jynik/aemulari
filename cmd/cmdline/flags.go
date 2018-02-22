@@ -57,9 +57,10 @@ func (s *SupportedFlags) lookup(flag string) *Flag {
 // Parse command line arguments and separate them into their
 // associated flags, reporting any misuse as an error.
 //
-// Returns a FlagMap on success, which
-func (l *SupportedFlags) parse(args []string) (FlagMap, error) {
-	var ret FlagMap = make(FlagMap)
+// Returns a ArgMap on success.  This maps flag names to the
+// associated argument values.
+func (l *SupportedFlags) parse(args []string) (ArgMap, error) {
+	var ret ArgMap = make(ArgMap)
 	var err error
 	var arg string
 

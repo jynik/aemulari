@@ -28,6 +28,8 @@ func PrettyPrintRegisters(regs []ae.Register) {
 	fmt.Println()
 }
 
+// TODO: Rewrite this - I'd prefer that the address in the dump
+// starts at `addr` % 16 rather than 00000000.
 func PrintHexDump(header string, addr uint64, data []byte) {
 	if len(header) != 0 {
 		fmt.Println(header)

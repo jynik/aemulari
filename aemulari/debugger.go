@@ -277,6 +277,11 @@ func (d *Debugger) Map(toMap MemRegion) error {
 	return nil
 }
 
+// Returns true if a region named `name` is mapped, and false othewise.
+func (d *Debugger) IsMapped(name string) bool {
+	return d.mapped.Contains(name)
+}
+
 // Unmapped the memory region named `name`. If the `outputFile` field specified when
 // the region was mapped was non-empty, the contents of the memory will be written
 // to this file.
@@ -419,6 +424,16 @@ func (d *Debugger) WriteRegByName(name string, value uint64) error {
 // Read `size` bytes of memory starting at `addr`.
 func (d *Debugger) ReadMem(addr, size uint64) ([]byte, error) {
 	return d.mu.MemRead(addr, size)
+}
+
+// Read an entire named region of memory
+func (d *Debugger) ReadMemRegion(name string) (uint64, []byte, error) {
+	if region, isMapped := d.mapped[name]; !isMapped {
+		return 0, []byte{}, errors.New("No such mapped memory region: " + name)
+	} else {
+		data, err := d.mu.MemRead(region.base, region.size)
+		return region.base, data, err
+	}
 }
 
 // Write `data` to memory at the address specified by `addr`
