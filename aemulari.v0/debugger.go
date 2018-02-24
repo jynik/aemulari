@@ -13,7 +13,7 @@ import (
 // A Debugger, after being created via NewDebugger(), may be used to
 // execute (via emulation) and inspect a program.
 type Debugger struct {
-	arch   Architecture
+	arch   Architecture	  // Access to architecture attributes
 	mu     uc.Unicorn     // Unicorn emulator handle
 	cs     *cs.Engine     // Capstone disassembly engine handle
 	cfg    DebuggerConfig // Configuration settings
@@ -99,7 +99,7 @@ func (d *Debugger) Reset(keepMappings bool) error {
 	if keepMappings {
 		newConfig.Mem = d.mapped
 	} else {
-		for _, r := range d.mapped {
+		for _, r := range d.mapped.Entries() {
 			// Don't treat the error as fatal; allow the reset to complete
 			err := d.Unmap(r.name)
 			if err != nil && firstError == nil {
@@ -145,8 +145,8 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 	//d.cs.SkipDataStart(nil)
 
 	// Load memory regions
-	d.mapped = make(MemRegionSet)
-	for _, m := range d.cfg.Mem {
+	d.mapped = EmptyMemRegionSet()
+	for _, m := range d.cfg.Mem.Entries() {
 		if err = d.Map(m); err != nil {
 			return d.closeAll(err)
 		} else if m.name == "code" && m.perms.Exec {
@@ -210,8 +210,9 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 func (d *Debugger) Close() error {
 	var ret error = nil
 
-	for name := range d.cfg.Mem {
-		if err := d.Unmap(name); ret == nil && err != nil {
+	mapped := d.mapped.Entries()
+	for _, region := range mapped {
+		if err := d.Unmap(region.name); ret == nil && err != nil {
 			ret = err
 		}
 	}
@@ -277,9 +278,14 @@ func (d *Debugger) Map(toMap MemRegion) error {
 	return nil
 }
 
-// Returns true if a region named `name` is mapped, and false othewise.
+// Returns true if a region named `name` is mapped, and false otherwise.
 func (d *Debugger) IsMapped(name string) bool {
 	return d.mapped.Contains(name)
+}
+
+// Returns all a slice of all mapped regions, sorted by base address (ascending)
+func (d *Debugger) Mapped() []MemRegion {
+	return d.mapped.Entries()
 }
 
 // Unmapped the memory region named `name`. If the `outputFile` field specified when

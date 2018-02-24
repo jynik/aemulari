@@ -408,6 +408,8 @@ func cmdShow(ui *Ui, cmd cmd, args []string) (string, error) {
 			ret += bp.String() + "\n"
 		}
 		return ret, nil
+	} else if strings.HasPrefix("mappings", what) {
+
 	} else if strings.HasPrefix("memory", what) {
 		if len(args) < 3 {
 			return "", fmt.Errorf("A required <address> argument was not provided.")

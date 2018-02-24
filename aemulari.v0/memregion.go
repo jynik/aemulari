@@ -94,6 +94,8 @@ func (r MemRegion) WriteFile(data []byte) error {
 	return nil
 }
 
+// Returns true if MemRegion is configured correctly.
+// Otherwise, false and an error is returned.
 func (r MemRegion) IsValid() (bool, error) {
 	var err error
 
