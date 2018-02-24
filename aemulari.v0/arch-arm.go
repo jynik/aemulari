@@ -384,8 +384,7 @@ func (a *archArm) currentMode(regs []Register) string {
 func (a *archArm) exception(intno uint32, regs []Register, instr []byte) Exception {
 	var e Exception
 
-	// TODO: Check if we're in Thumb mode
-	thumb := false
+	thumb := a.currentMode(regs) == "thumb"
 	havePc := false
 
 	if (thumb && len(instr) < 2) || (!thumb && len(instr) < 4) {
