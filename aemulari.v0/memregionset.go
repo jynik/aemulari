@@ -16,7 +16,7 @@ type MemRegionSet struct {
 // This function or NewMemRegionSet must be used before attempting to
 // access a MemRegionSet.
 func EmptyMemRegionSet() MemRegionSet {
-	return MemRegionSet{ entries: map[string]MemRegion{} }
+	return MemRegionSet{entries: map[string]MemRegion{}}
 }
 
 // Create a new MemRegionSet and initialize it with MemRegions described

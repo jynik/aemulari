@@ -362,7 +362,7 @@ func (a *archArm) endianness(regs []Register) Endianness {
 func (a *archArm) currentMode(regs []Register) string {
 	for _, r := range regs {
 		if r.attr.name == "cpsr" {
-			value , err := r.getFlagValueByName("T")
+			value, err := r.getFlagValueByName("T")
 			if err != nil {
 				panic("Bug: " + err.Error())
 			}

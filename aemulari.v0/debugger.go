@@ -13,7 +13,7 @@ import (
 // A Debugger, after being created via NewDebugger(), may be used to
 // execute (via emulation) and inspect a program.
 type Debugger struct {
-	arch   Architecture	  // Access to architecture attributes
+	arch   Architecture   // Access to architecture attributes
 	mu     uc.Unicorn     // Unicorn emulator handle
 	cs     *cs.Engine     // Capstone disassembly engine handle
 	cfg    DebuggerConfig // Configuration settings

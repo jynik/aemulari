@@ -12,15 +12,13 @@ import (
 	"../internal/util"
 )
 
-const version = "v0.1.0"
-
 type hexdumpRequest struct {
 	name         string
 	addr, length uint64
 }
 
 var usageText string = "" +
-	"aemulari - Batch execution of the aemulari debugger (" + version + ")\n" +
+	"aemulari - Batch execution of the aemulari debugger (v" + ae.Version + ")\n" +
 	"Usage: %s [options]\n" +
 	"\n" +
 	"Options:\n" +

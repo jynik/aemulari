@@ -1,20 +1,23 @@
 package ui
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
+	ae "../../../aemulari.v0"
 	"github.com/jroimartin/gocui"
 )
 
 type cmd struct {
-	names []string
-	min   int
-	max   int
-	exec  func(*Ui, cmd, []string) (string, error)
-	help  string
+	names   []string
+	min     int
+	max     int
+	exec    func(*Ui, cmd, []string) (string, error)
+	summary string
+	details string
 
 	suppressHistory bool // Do not pace this command in history
 	mayTaintRegs    bool
@@ -108,8 +111,20 @@ var cmdList []cmd = []cmd{
 		max:          3,
 		exec:         cmdRegWrite,
 		mayTaintRegs: true,
-		help: "<register> <value>\n" +
-			"Write <value> to <register>.",
+		summary: "Write a value to a register",
+		details: "<register> <value>\n" +
+			"Write <value> to <register>\n" +
+			"\n" +
+			"<value> may be one of:\n" +
+			"  - A base 10 or base 16 value. This may be positive or negative.\n" +
+			"  - {<hex sequence>} such as: {0102deadbeef0405}\n" +
+			"  - A fixed-length signed or unsigned value via fn(<x>) where fn is:\n" +
+			"     i8() u8(), u16(), i16(), i32(), u32(), i64(), u64()\n" +
+			"\n" +
+			"Examples:\n" +
+			" rw r0 0x1b4d1dea\n" +
+			" rw r0 i16(-7)\n" +
+			" rw r0 {deadbeef}\n",
 	},
 
 	{
@@ -118,13 +133,21 @@ var cmdList []cmd = []cmd{
 		max:         4096, // Arbitrary "good enough" value
 		exec:        cmdMemWrite,
 		mayTaintMem: true,
-		help: "<address> <value> [value] ... [value]\n" +
+
+		summary: "Write data to the specified memory address",
+		details: "<address> <value> [value] ... [value]\n" +
 			"Write one or more values, converted to target endianness, to <address>.\n" +
+			"\n" +
 			"<value> may be one of:\n" +
-			"  A base 10 or base 16 value. This may be positive or negative.\n" +
-			"  {<hex sequence>} such as: {0102deadbeef0405}\n" +
-			"  A fixed-length signed or unsigned value via fn(<x>) where fn is:\n" +
-			"    i8() u8(), u16(), i16(), i32(), u32(), i64(), u64()\n",
+			"  - A base 10 or base 16 value. This may be positive or negative.\n" +
+			"  - {<hex sequence>} such as: {0102deadbeef0405}\n" +
+			"  - A fixed-length signed or unsigned value via fn(<x>) where fn is:\n" +
+			"     i8() u8(), u16(), i16(), i32(), u32(), i64(), u64()\n" +
+			"\n" +
+			"Examples:\n" +
+			" mw 0x1ab000 0x1b4d1dea\n" +
+			" mw 0x1ab000 i16(-7)\n" +
+			" mw 0x1ab000 {deadbeef} 0xbadc0de\n",
 	},
 
 	// TODO: memdump <region> <filename>
@@ -137,7 +160,10 @@ var cmdList []cmd = []cmd{
 		exec:         cmdContinue,
 		mayTaintRegs: true,
 		mayTaintMem:  true,
-		help:         "\nContinue execution until a breakpoint or exception occurs.\n",
+		summary:	  "Execute until a breakpoint or exception occurs",
+		details:	  "\n" +
+		"\n" +
+		"Execute until a breakpoint or exception occurs.",
 	},
 
 	{
@@ -147,7 +173,10 @@ var cmdList []cmd = []cmd{
 		exec:         cmdStep,
 		mayTaintRegs: true,
 		mayTaintMem:  true,
-		help:         "[count]\nExecute a single or [count] instructions.",
+		summary:	  "Execute 1 or more instructions",
+		details:      "[count]\n" +
+		"\n" +
+		"Execute a single or [count] instructions.",
 	},
 
 	{
@@ -155,8 +184,25 @@ var cmdList []cmd = []cmd{
 		min:   1,
 		max:   2,
 		exec:  cmdBreak,
-		help: "[address]\n" +
+		summary: "Set a breakpoint",
+		details: "[address]\n" +
+			"\n" +
 			"Set a breakpoint at PC or [address], if specified.",
+	},
+
+	{
+		names: []string{"delete"},
+		min:   1,
+		max:   3,
+		exec:  cmdDelete,
+		summary: "Delete specified breakpoints",
+		details: "[all | [id|address <value>]]\n" +
+			"\n" +
+			"Notes:" +
+			" - With no arguments, this deletes any breakpoints at PC.\n" +
+			" - If run with \"all\", all breakpoints are removed.\n" +
+			" - Providing `id` and a <value> removes the associated breakpoint.\n" +
+			" - Specifying `address` and <value> removes all breakpoints at <value>.\n",
 	},
 
 	// Show the current status of various items
@@ -166,22 +212,12 @@ var cmdList []cmd = []cmd{
 		max:         3,
 		exec:        cmdShow,
 		mayTaintMem: true,
-		help: "<item> [per-item args]\nShow or display the specified <item>.\n" +
+		summary: "Display information about the specified item(s)",
+		details: "<item> [per-item args]\nShow or display the specified <item>.\n" +
+			"\n" +
 			"Available items:\n" +
 			"	breakpoints" +
 			"	memory <address>",
-	},
-
-	{
-		names: []string{"delete"},
-		min:   1,
-		max:   3,
-		exec:  cmdDelete,
-		help: "[all | [id|address <value>]]\n" +
-			" - With no arguments, this deletes any breakpoints at PC.\n" +
-			" - If run with \"all\", all breakpoints are removed.\n" +
-			" - Providing `id` and a <value> removes the associated breakpoint.\n" +
-			" - Specifying `address` and <value> removes all breakpoints at <value>.\n",
 	},
 
 	{
@@ -190,15 +226,21 @@ var cmdList []cmd = []cmd{
 		max:             2,
 		exec:            cmdClear,
 		suppressHistory: true,
-		help:            "[console|commands]\nClear Console, Commands, or both.",
+		summary:		 "Clear console or command window",
+		details:         "[console|commands]\n" +
+		"\n" +
+		"Clear Console, Commands, or both.",
 	},
 
 	{
-		names: []string{"reset"},
-		min:   1,
-		max:   1,
-		exec:  cmdReset,
-		help:  "\nResets the debugger. Memory mappings and breakpoints are kept as-is.",
+		names:   []string{"reset"},
+		min:     1,
+		max:     1,
+		exec:    cmdReset,
+		summary: "Reset the debugger state",
+		details: "\n" +
+		"\n" +
+		"Resets the debugger. Memory mappings and breakpoints are kept as-is.",
 	},
 
 	{
@@ -207,7 +249,10 @@ var cmdList []cmd = []cmd{
 		max:             1,
 		exec:            cmdQuit,
 		suppressHistory: true,
-		help:            "\nExit the application. Alternatively, use Ctrl-Q.",
+		summary:		 "Exit the program",
+		details:         "\n" +
+		"\n" +
+		"Exit the program. Alternatively, use Ctrl-Q.",
 	},
 
 	{
@@ -216,7 +261,10 @@ var cmdList []cmd = []cmd{
 		max:   2,
 		/* exec assigned later to avoid initialization loop */
 
-		help: "<command>\nShow the help text for <command>\n",
+		summary: "Describe the specified command",
+		details: "<command>\n" +
+		"\n" +
+		"Show the help text for <command>\n",
 	},
 }
 
@@ -326,10 +374,22 @@ func cmdDelete(ui *Ui, cmd cmd, args []string) (string, error) {
 func cmdHelp(ui *Ui, cmd cmd, args []string) (string, error) {
 
 	if len(args) < 2 {
-		var helpText string = "Available commands:\n"
+		var helpText string
+
+		helpText += "aemulari-cui (v" + ae.Version + ")\n"
+		helpText += "Available commands:\n"
+
 		for _, c := range cmdList {
-			helpText += "  " + c.names[0] + "\n"
+			helpText += fmt.Sprintf("  %-12s %s\n", c.names[0], c.summary)
 		}
+
+		helpText += "\n"
+		helpText += "Notes:\n"
+		helpText += " - Entering an empty command will run the previous command.\n"
+		helpText += "     This is useful when stepping through a program.\n"
+		helpText += " - Only a subset of command names is actually required.\n"
+		helpText += "     Commands are matched in the order presented above.\n"
+
 		return helpText, nil
 	} else {
 		c, err := lookupCmd(args[1])
@@ -337,7 +397,7 @@ func cmdHelp(ui *Ui, cmd cmd, args []string) (string, error) {
 			return "", err
 		}
 
-		return fmt.Sprintf("%s %s\n", c.matchedName, c.help), nil
+		return fmt.Sprintf("Usage: %s %s\n", c.matchedName, c.details), nil
 	}
 }
 
@@ -442,11 +502,33 @@ func cmdShow(ui *Ui, cmd cmd, args []string) (string, error) {
 }
 
 func cmdRegWrite(ui *Ui, cmd cmd, args []string) (string, error) {
-	if val, err := strconv.ParseUint(args[2], 0, 64); err != nil {
-		return "", fmt.Errorf("\"%s\" is not a valid register value.", args[2])
-	} else {
-		return "", ui.dbg.WriteRegByName(args[1], val)
+	var regVal uint64
+
+	endianness, err := ui.dbg.Endianness()
+	if err != nil {
+		return "", err
 	}
+
+	bytes, err  := parseValue(args[2], endianness)
+	if err != nil {
+		return "", fmt.Errorf("\"%s\" is not a valid register value.", args[2])
+	}
+
+	if len(bytes) > 8 {
+		return "", fmt.Errorf("\"%s\" exceeds the maximum register size.", args[2])
+	} else if len(bytes) < 8 {
+		padLen := 8 - len(bytes)
+		padding := make([]byte, padLen)
+		bytes = append(bytes, padding...)
+	}
+
+	if endianness == ae.BigEndian {
+		regVal = binary.BigEndian.Uint64(bytes)
+	} else {
+		regVal = binary.LittleEndian.Uint64(bytes)
+	}
+
+	return "", ui.dbg.WriteRegByName(args[1], regVal)
 }
 
 func cmdReset(ui *Ui, cmd cmd, args []string) (string, error) {

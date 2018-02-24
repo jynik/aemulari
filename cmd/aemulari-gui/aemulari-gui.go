@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"os"
 
+	ae "../../aemulari.v0"
+
 	"../internal/cmdline"
 	"./ui"
 )
 
-const version = "v0.1.0"
-
 var usageText string = "" +
-	"aemulari - Terminal GUI frontend for aemulari debugger (" + version + ")\n" +
+	"aemulari - Terminal GUI frontend for aemulari debugger (v" + ae.Version + ")\n" +
 	"Usage: %s [options]\n" +
 	"\n" +
 	"Options:\n" +
@@ -23,11 +23,11 @@ var usageText string = "" +
 	cmdline.Details_arch +
 	cmdline.Details_mem +
 	cmdline.Notes +
-	"  - Available GUI commands can be viewed by running the \"help\" command.\n" +
+	" - Available GUI commands can be viewed by running the \"help\" command.\n" +
 	"\n" +
 	"Examples:\n" +
 	"  Run myprogram.bin with memory at 0x48000 initialized with the contents\n" +
-	"  of a mydata.bin file.\n"+
+	"  of a mydata.bin file.\n" +
 	"    aemulari -m code:0x10000:0x1000:rx:./myprogram.bin \\\n" +
 	"      -m mydata:0x48000:0x200:rwx:./mydata.bin\n" +
 	"\n" +
