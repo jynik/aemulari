@@ -1,8 +1,14 @@
 GO ?= go
 
 DEPS := .deps/unicorn .deps/capstr .deps/gocui
-CMD_COMMON := $(wildcard cmd/cmdline/*.go) $(wildcard cmd/util/*.go)
-SRC  := $(wildcard aemulari/*.go)
+
+LIB_SRC := $(wildcard aemulari.v0/*.go)
+CMD_COMMON := $(LIB_SRC) $(wildcard cmd/cmdline/*.go) $(wildcard cmd/util/*.go)
+
+AEMULARI_SRC := $(wildcard cmd/aemulari/*.go) $(CMD_COMMON)
+AEMULARI_GUI_SRC := $(wildcard cmd/aemulari-gui/*.go) \
+					$(wildcard cmd/aemulari-gui/ui/*.go)
+
 BIN  := bin/aemulari bin/aemulari-gui
 
 all: bin/aemulari bin/aemulari-gui
@@ -10,10 +16,10 @@ all: bin/aemulari bin/aemulari-gui
 bin:
 	@mkdir -p $@
 
-bin/aemulari: ./cmd/aemulari/aemulari.go $(CMD_COMMON) $(SRC) $(DEPS) bin
+bin/aemulari: $(AEMULARI_SRC) $(DEPS) bin
 	$(GO) build -o $@ $<
 
-bin/aemulari-gui: ./cmd/aemulari-gui/aemulari-gui.go $(CMD_COMMON) $(SRC) $(DEPS) bin
+bin/aemulari-gui: $(AEMULARI_GUI_SRC) $(DEPS) bin
 	$(GO) build -o $@ $<
 
 .deps:
