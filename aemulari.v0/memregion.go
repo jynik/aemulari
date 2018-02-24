@@ -66,18 +66,40 @@ func (r MemRegion) HasInputFile() bool {
 	return r.inputFile != ""
 }
 
+// Craft an error message that includes e
+func (r *MemRegion) loadError(e error) ([]byte, error) {
+	return []byte{}, fmt.Errorf(
+		"Failed to load data for memory region \"%s\" - %s",
+		r.name, e.Error())
+}
+
 // Load data that should be used to initialize a memory region
-func (r MemRegion) LoadInputData() ([]byte, error) {
+func (r *MemRegion) LoadInputData() ([]byte, error) {
+	var data []byte = make([]byte, r.size)
+
 	if r.HasInputFile() {
-		data, err := ioutil.ReadFile(r.inputFile)
+
+		f, err := os.Open(r.inputFile)
 		if err != nil {
-			return []byte{},
-				fmt.Errorf("Failed to load data for memory region \"%s\" - %s",
-					r.name, err.Error())
+			return r.loadError(err)
+		}
+
+		// TODO Allow this to be specified in the memory specifier syntax
+		offset := int64(0)
+
+		_, err = f.Seek(offset, 0)
+		if err != nil {
+			return r.loadError(err)
+		}
+
+		_, err = f.Read(data)
+		if err != nil {
+			return r.loadError(err)
 		}
 		return data, err
 	}
-	return []byte{}, nil
+
+	return data, nil
 }
 
 // Returns true if the memory region has an output file, and false otherwise
@@ -114,7 +136,7 @@ func (r MemRegion) IsValid() (bool, error) {
 	if len(r.inputFile) > 0 {
 		if _, err = os.Stat(r.inputFile); os.IsNotExist(err) {
 			return false,
-				fmt.Errorf("Cannot open input file for memory region \"%s\": %s",
+				fmt.Errorf("Cannot open input file for memory region \"%s\" - %s",
 					r.name, err.Error())
 		}
 	}
