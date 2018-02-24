@@ -26,7 +26,7 @@ func EmptyMemRegionSet() MemRegionSet {
 // This function or NewEmptyMemRegionSet must be used before attempting to
 // access a MemRegionSet.
 func NewMemRegionSet(regionSpecs []string) (MemRegionSet, error) {
-	ret := MemRegionSet{}
+	ret := EmptyMemRegionSet()
 	for _, s := range regionSpecs {
 		err := ret.AddNewMemRegion(s)
 		if err != nil {
