@@ -141,6 +141,11 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 		return err
 	}
 
+	if err = d.cs.Option(cs.OPT_TYPE_SKIPDATA, cs.OPT_ON); err != nil {
+		d.mu.Close()
+		return err
+	}
+
 	// Load memory regions
 	d.mapped = EmptyMemRegionSet()
 	for _, m := range d.cfg.Mem.Entries() {
@@ -559,16 +564,19 @@ func (d *Debugger) DisassembleAt(addr uint64, count uint64) ([]Disassembly, erro
 	if code, err := d.ReadMem(addr, len); err != nil {
 		return ret, nil
 	} else {
-		if instrs, err := d.cs.Dis(code, addr, count); err == nil {
-			for _, instr := range instrs {
-				var entry Disassembly
-				entry.AddressU64 = instr.Addr()
-				entry.Address = fmt.Sprintf("%08x", instr.Addr())
-				entry.Opcode = hex.EncodeToString(instr.Bytes())
-				entry.Mnemonic = instr.Mnemonic()
-				entry.Operands = instr.OpStr()
-				ret = append(ret, entry)
-			}
+		instrs, err := d.cs.Dis(code, addr, count)
+		if err != nil {
+			return ret, err
+		}
+
+		for _, instr := range instrs {
+			var entry Disassembly
+			entry.AddressU64 = instr.Addr()
+			entry.Address = fmt.Sprintf("%08x", instr.Addr())
+			entry.Opcode = hex.EncodeToString(instr.Bytes())
+			entry.Mnemonic = instr.Mnemonic()
+			entry.Operands = instr.OpStr()
+			ret = append(ret, entry)
 		}
 	}
 
