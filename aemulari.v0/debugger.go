@@ -141,9 +141,6 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 		return err
 	}
 
-	// TODO customize invalid instruction handling
-	//d.cs.SkipDataStart(nil)
-
 	// Load memory regions
 	d.mapped = EmptyMemRegionSet()
 	for _, m := range d.cfg.Mem.Entries() {
