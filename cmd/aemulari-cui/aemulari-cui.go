@@ -11,7 +11,7 @@ import (
 )
 
 var usageText string = "" +
-	"aemulari - Terminal GUI frontend for aemulari debugger (v" + ae.Version + ")\n" +
+	"aemulari-cui -- Console UI frontend for the aemulari debugger (v" + ae.Version + ")\n" +
 	"Usage: %s [options]\n" +
 	"\n" +
 	"Options:\n" +

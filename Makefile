@@ -6,12 +6,12 @@ LIB_SRC := $(wildcard aemulari.v0/*.go)
 CMD_COMMON := $(LIB_SRC) $(wildcard cmd/cmdline/*.go) $(wildcard cmd/util/*.go)
 
 AEMULARI_SRC := $(wildcard cmd/aemulari/*.go) $(CMD_COMMON)
-AEMULARI_GUI_SRC := $(wildcard cmd/aemulari-gui/*.go) \
-					$(wildcard cmd/aemulari-gui/ui/*.go)
+AEMULARI_CUI_SRC := $(wildcard cmd/aemulari-cui/*.go) \
+					$(wildcard cmd/aemulari-cui/ui/*.go)
 
-BIN  := bin/aemulari bin/aemulari-gui
+BIN  := bin/aemulari bin/aemulari-cui
 
-all: bin/aemulari bin/aemulari-gui
+all: bin/aemulari bin/aemulari-cui
 
 bin:
 	@mkdir -p $@
@@ -19,7 +19,7 @@ bin:
 bin/aemulari: $(AEMULARI_SRC) $(DEPS) bin
 	$(GO) build -o $@ $<
 
-bin/aemulari-gui: $(AEMULARI_GUI_SRC) $(DEPS) bin
+bin/aemulari-cui: $(AEMULARI_CUI_SRC) $(DEPS) bin
 	$(GO) build -o $@ $<
 
 .deps:

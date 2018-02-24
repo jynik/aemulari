@@ -18,7 +18,7 @@ type hexdumpRequest struct {
 }
 
 var usageText string = "" +
-	"aemulari - Batch execution of the aemulari debugger (v" + ae.Version + ")\n" +
+	"aemulari -- Batch execution of the aemulari debugger (v" + ae.Version + ")\n" +
 	"Usage: %s [options]\n" +
 	"\n" +
 	"Options:\n" +
