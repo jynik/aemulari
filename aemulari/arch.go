@@ -72,7 +72,7 @@ type Architecture interface {
 	//
 	register(name string) (*registerAttr, error)
 
-	// Retrieve all register definiitions
+	// Retrieve all register definitions
 	registers() []*registerAttr
 }
 

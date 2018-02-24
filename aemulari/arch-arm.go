@@ -359,6 +359,28 @@ func (a *archArm) endianness(regs []Register) Endianness {
 	panic("arm.Endianness() was not passed CPSR.")
 }
 
+func (a *archArm) currentMode(regs []Register) string {
+	for _, r := range regs {
+		if r.attr.name == "cpsr" {
+			value , err := r.getFlagValueByName("T")
+			if err != nil {
+				panic("Bug: " + err.Error())
+			}
+
+			switch value {
+			case 0x0:
+				return "arm"
+			case 0x1:
+				return "thumb"
+			default:
+				panic(fmt.Sprintf("Buf: Illegal CPSR value: 0x%x", value))
+			}
+		}
+	}
+
+	panic("Bug: Provided register set was missing CPSR")
+}
+
 func (a *archArm) exception(intno uint32, regs []Register, instr []byte) Exception {
 	var e Exception
 
