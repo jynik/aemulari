@@ -6,7 +6,7 @@ import (
 
 	"github.com/jroimartin/gocui"
 
-	ae "../../../aemulari"
+	ae "../../../aemulari.v0"
 )
 
 type DisassemblyInfo struct {

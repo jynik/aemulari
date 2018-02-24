@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	ae "../../../aemulari"
+	ae "../../../aemulari.v0"
 )
 
 func hexSeq(s string) ([]byte, bool) {

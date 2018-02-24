@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	ae "../../../aemulari"
+	ae "../../../aemulari.v0"
 )
 
 var linesep string = strings.Repeat("-", 80)

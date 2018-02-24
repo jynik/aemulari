@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	ae "../../aemulari"
+	ae "../../aemulari.v0"
 	"../internal/cmdline"
 	"../internal/util"
 )
