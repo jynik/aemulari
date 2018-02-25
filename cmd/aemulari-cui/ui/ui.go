@@ -75,7 +75,20 @@ func (ui *Ui) Close() {
 	ui.g.Close()
 }
 
+func (ui *Ui) showStartupText() {
+	ui.writeConsole("\naemulari-cui (v" + ae.Version + ")\n\n")
+	output, _, err := ui.handleCommand("help")
+
+	if err != nil {
+		panic("BUG: Failed to display initial help: " + err.Error())
+	}
+
+	ui.appendConsole(output)
+
+}
+
 func (ui *Ui) Run() error {
+	ui.showStartupText()
 	if err := ui.g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		return err
 	}

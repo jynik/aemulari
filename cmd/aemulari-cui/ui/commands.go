@@ -106,54 +106,6 @@ func matches(toMatch, s string) bool {
 // Keep this sorted in the order of preferred completion and help display order
 var cmdList []cmd = []cmd{
 	{
-		names:        []string{"rw"},
-		min:          3,
-		max:          3,
-		exec:         cmdRegWrite,
-		mayTaintRegs: true,
-		summary: "Write a value to a register",
-		details: "<register> <value>\n" +
-			"Write <value> to <register>\n" +
-			"\n" +
-			"<value> may be one of:\n" +
-			"  - A base 10 or base 16 value. This may be positive or negative.\n" +
-			"  - {<hex sequence>} such as: {0102deadbeef0405}\n" +
-			"  - A fixed-length signed or unsigned value via fn(<x>) where fn is:\n" +
-			"     i8() u8(), u16(), i16(), i32(), u32(), i64(), u64()\n" +
-			"\n" +
-			"Examples:\n" +
-			" rw r0 0x1b4d1dea\n" +
-			" rw r0 i16(-7)\n" +
-			" rw r0 {deadbeef}\n",
-	},
-
-	{
-		names:       []string{"mw"},
-		min:         3,
-		max:         4096, // Arbitrary "good enough" value
-		exec:        cmdMemWrite,
-		mayTaintMem: true,
-
-		summary: "Write data to the specified memory address",
-		details: "<address> <value> [value] ... [value]\n" +
-			"Write one or more values, converted to target endianness, to <address>.\n" +
-			"\n" +
-			"<value> may be one of:\n" +
-			"  - A base 10 or base 16 value. This may be positive or negative.\n" +
-			"  - {<hex sequence>} such as: {0102deadbeef0405}\n" +
-			"  - A fixed-length signed or unsigned value via fn(<x>) where fn is:\n" +
-			"     i8() u8(), u16(), i16(), i32(), u32(), i64(), u64()\n" +
-			"\n" +
-			"Examples:\n" +
-			" mw 0x1ab000 0x1b4d1dea\n" +
-			" mw 0x1ab000 i16(-7)\n" +
-			" mw 0x1ab000 {deadbeef} 0xbadc0de\n",
-	},
-
-	// TODO: memdump <region> <filename>
-
-	// TODO: memload <region> <filename>
-	{
 		names:        []string{"continue", "run"},
 		min:          1,
 		max:          1,
@@ -203,6 +155,52 @@ var cmdList []cmd = []cmd{
 			" - If run with \"all\", all breakpoints are removed.\n" +
 			" - Providing `id` and a <value> removes the associated breakpoint.\n" +
 			" - Specifying `address` and <value> removes all breakpoints at <value>.\n",
+	},
+
+
+	{
+		names:        []string{"rw"},
+		min:          3,
+		max:          3,
+		exec:         cmdRegWrite,
+		mayTaintRegs: true,
+		summary: "Write a value to a register",
+		details: "<register> <value>\n" +
+			"Write <value> to <register>\n" +
+			"\n" +
+			"<value> may be one of:\n" +
+			"  - A base 10 or base 16 value. This may be positive or negative.\n" +
+			"  - {<hex sequence>} such as: {0102deadbeef0405}\n" +
+			"  - A fixed-length signed or unsigned value via fn(<x>) where fn is:\n" +
+			"     i8() u8(), u16(), i16(), i32(), u32(), i64(), u64()\n" +
+			"\n" +
+			"Examples:\n" +
+			" rw r0 0x1b4d1dea\n" +
+			" rw r0 i16(-7)\n" +
+			" rw r0 {deadbeef}\n",
+	},
+
+	{
+		names:       []string{"mw"},
+		min:         3,
+		max:         4096, // Arbitrary "good enough" value
+		exec:        cmdMemWrite,
+		mayTaintMem: true,
+
+		summary: "Write data to the specified memory address",
+		details: "<address> <value> [value] ... [value]\n" +
+			"Write one or more values, converted to target endianness, to <address>.\n" +
+			"\n" +
+			"<value> may be one of:\n" +
+			"  - A base 10 or base 16 value. This may be positive or negative.\n" +
+			"  - {<hex sequence>} such as: {0102deadbeef0405}\n" +
+			"  - A fixed-length signed or unsigned value via fn(<x>) where fn is:\n" +
+			"     i8() u8(), u16(), i16(), i32(), u32(), i64(), u64()\n" +
+			"\n" +
+			"Examples:\n" +
+			" mw 0x1ab000 0x1b4d1dea\n" +
+			" mw 0x1ab000 i16(-7)\n" +
+			" mw 0x1ab000 {deadbeef} 0xbadc0de\n",
 	},
 
 	// Show the current status of various items
@@ -376,7 +374,6 @@ func cmdHelp(ui *Ui, cmd cmd, args []string) (string, error) {
 	if len(args) < 2 {
 		var helpText string
 
-		helpText += "aemulari-cui (v" + ae.Version + ")\n"
 		helpText += "Available commands:\n"
 
 		for _, c := range cmdList {
