@@ -12,7 +12,7 @@ import (
 )
 
 const linesep = "" +
-"-------------------------------------------------------------------------------\n"
+	"-------------------------------------------------------------------------------\n"
 
 type cmd struct {
 	names   []string
@@ -62,10 +62,10 @@ func (ui *Ui) handleCommand(line string) (string, bool, error) {
 	if nargs < cmd.min {
 		if cmd.min <= 2 {
 			err = fmt.Errorf("%s: Required argument is missing.",
-					cmd.matchedName)
+				cmd.matchedName)
 		} else {
 			err = fmt.Errorf("%s: Too few arguments. At least %d are required.",
-					cmd.matchedName, cmd.min - 1)
+				cmd.matchedName, cmd.min-1)
 		}
 		return "", true, err
 	} else if nargs > cmd.max {
@@ -120,10 +120,10 @@ var cmdList []cmd = []cmd{
 		exec:         cmdContinue,
 		mayTaintRegs: true,
 		mayTaintMem:  true,
-		summary:	  "Execute until a breakpoint or exception occurs",
-		details:	  "\n" +
-		"\n" +
-		"Execute until a breakpoint or exception occurs.",
+		summary:      "Execute until a breakpoint or exception occurs",
+		details: "\n" +
+			"\n" +
+			"Execute until a breakpoint or exception occurs.",
 	},
 
 	{
@@ -133,17 +133,17 @@ var cmdList []cmd = []cmd{
 		exec:         cmdStep,
 		mayTaintRegs: true,
 		mayTaintMem:  true,
-		summary:	  "Execute 1 or more instructions",
-		details:      "[count]\n" +
-		"\n" +
-		"Execute a single or [count] instructions.\n",
+		summary:      "Execute 1 or more instructions",
+		details: "[count]\n" +
+			"\n" +
+			"Execute a single or [count] instructions.\n",
 	},
 
 	{
-		names: []string{"breakpoint"},
-		min:   1,
-		max:   2,
-		exec:  cmdBreak,
+		names:   []string{"breakpoint"},
+		min:     1,
+		max:     2,
+		exec:    cmdBreak,
 		summary: "Set a breakpoint",
 		details: "[address]\n" +
 			"\n" +
@@ -151,10 +151,10 @@ var cmdList []cmd = []cmd{
 	},
 
 	{
-		names: []string{"delete"},
-		min:   1,
-		max:   3,
-		exec:  cmdDelete,
+		names:   []string{"delete"},
+		min:     1,
+		max:     3,
+		exec:    cmdDelete,
 		summary: "Delete specified breakpoints",
 		details: "[all | [id|address <value>]]\n" +
 			"\n" +
@@ -165,14 +165,13 @@ var cmdList []cmd = []cmd{
 			" - Specifying `address` and <value> removes all breakpoints at <value>.\n",
 	},
 
-
 	{
 		names:        []string{"rw"},
 		min:          3,
 		max:          3,
 		exec:         cmdRegWrite,
 		mayTaintRegs: true,
-		summary: "Write a value to a register",
+		summary:      "Write a value to a register",
 		details: "<register> <value>\n" +
 			"Write <value> to <register>\n" +
 			"\n" +
@@ -212,12 +211,12 @@ var cmdList []cmd = []cmd{
 	},
 
 	{
-		names: []string{"map"},
-		min:		2,
-		max:		7,
-		exec:  cmdMemMap,
+		names:       []string{"map"},
+		min:         2,
+		max:         7,
+		exec:        cmdMemMap,
 		mayTaintMem: true,
-		summary: "Map and configure a memory region.",
+		summary:     "Map and configure a memory region.",
 		details: "<name>:<addr>:<size>:[permissions]:[input file]:[output_file]\n" +
 			"\n" +
 			"This command is identical to the -m/--mem <region> command line option,\n" +
@@ -230,12 +229,12 @@ var cmdList []cmd = []cmd{
 	},
 
 	{
-		names: []string{"unmap"},
-		exec:  cmdMemUnmap,
-		min:		2,
-		max:		4096,  // Arbitrary "good enough" value
+		names:       []string{"unmap"},
+		exec:        cmdMemUnmap,
+		min:         2,
+		max:         4096, // Arbitrary "good enough" value
 		mayTaintMem: true,
-		summary: "Unmap a memory region",
+		summary:     "Unmap a memory region",
 		details: "<name> [name] ... [name]\n" +
 			"\n" +
 			"Unmap one or more memory regions, by name.\n" +
@@ -245,18 +244,17 @@ var cmdList []cmd = []cmd{
 	},
 
 	{
-		names:		[]string{"dumpmem"},
-		min:		3,
-		max:		4,
-		exec:		cmdDumpMem,
-		summary:	"Save the contents of a memory region to a file",
-		details:	"<filename> <region name>\n" +
+		names:   []string{"dumpmem"},
+		min:     3,
+		max:     4,
+		exec:    cmdDumpMem,
+		summary: "Save the contents of a memory region to a file",
+		details: "<filename> <region name>\n" +
 			"               <filename> <addr> <length>\n" +
 			"\n" +
 			"Save the contents of a memory region, specified by name or\n" +
 			"by address and length, to a file.",
 	},
-
 
 	{
 		names:       []string{"display"},
@@ -264,7 +262,7 @@ var cmdList []cmd = []cmd{
 		max:         3,
 		exec:        cmdDisplay,
 		mayTaintMem: true, // Not really taint, but we need to force redraw of Memory window
-		summary: "Display information about the specified item(s)",
+		summary:     "Display information about the specified item(s)",
 		details: "<item> [per-item args]\nShow or display the specified <item>.\n" +
 			"\n" +
 			"Available items:\n" +
@@ -279,10 +277,10 @@ var cmdList []cmd = []cmd{
 		max:             2,
 		exec:            cmdClear,
 		suppressHistory: true,
-		summary:		 "Clear console or command window",
-		details:         "[console|commands]\n" +
-		"\n" +
-		"Clear Console, Commands, or both.",
+		summary:         "Clear console or command window",
+		details: "[console|commands]\n" +
+			"\n" +
+			"Clear Console, Commands, or both.",
 	},
 
 	{
@@ -292,8 +290,8 @@ var cmdList []cmd = []cmd{
 		exec:    cmdReset,
 		summary: "Reset the debugger state",
 		details: "\n" +
-		"\n" +
-		"Resets the debugger. Memory mappings and breakpoints are kept as-is.",
+			"\n" +
+			"Resets the debugger. Memory mappings and breakpoints are kept as-is.",
 	},
 
 	{
@@ -302,10 +300,10 @@ var cmdList []cmd = []cmd{
 		max:             1,
 		exec:            cmdQuit,
 		suppressHistory: true,
-		summary:		 "Exit the program",
-		details:         "\n" +
-		"\n" +
-		"Exit the program. Alternatively, use Ctrl-Q.",
+		summary:         "Exit the program",
+		details: "\n" +
+			"\n" +
+			"Exit the program. Alternatively, use Ctrl-Q.",
 	},
 
 	{
@@ -316,8 +314,8 @@ var cmdList []cmd = []cmd{
 
 		summary: "Describe the specified command",
 		details: "<command>\n" +
-		"\n" +
-		"Show the help text for <command>\n",
+			"\n" +
+			"Show the help text for <command>\n",
 	},
 }
 
@@ -558,7 +556,6 @@ func cmdHelp(ui *Ui, cmd cmd, args []string) (string, error) {
 	}
 }
 
-
 func cmdMemMap(ui *Ui, cmd cmd, args []string) (string, error) {
 	regionStr := strings.Join(args[1:], ":")
 
@@ -612,8 +609,6 @@ func cmdMemUnmap(ui *Ui, cmd cmd, args []string) (string, error) {
 	return ret, nil
 }
 
-
-
 func cmdQuit(ui *Ui, cmd cmd, args []string) (string, error) {
 	ui.quit = true
 	return "", nil
@@ -627,7 +622,7 @@ func cmdRegWrite(ui *Ui, cmd cmd, args []string) (string, error) {
 		return "", err
 	}
 
-	bytes, err  := parseValue(args[2], endianness)
+	bytes, err := parseValue(args[2], endianness)
 	if err != nil {
 		return "", fmt.Errorf("\"%s\" is not a valid register value.", args[2])
 	}
