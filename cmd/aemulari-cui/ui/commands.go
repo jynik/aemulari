@@ -60,7 +60,7 @@ func (ui *Ui) handleCommand(line string) (string, bool, error) {
 
 	nargs := len(args)
 	if nargs < cmd.min {
-		if cmd.min == 1 {
+		if cmd.min <= 2 {
 			err = fmt.Errorf("%s: Required argument is missing.",
 					cmd.matchedName)
 		} else {
@@ -230,7 +230,7 @@ var cmdList []cmd = []cmd{
 
 	{
 		names: []string{"unmap"},
-		exec:  cmdMemMap,
+		exec:  cmdMemUnmap,
 		min:		2,
 		max:		4096,  // Arbitrary "good enough" value
 		summary: "Unmap a memory region",
@@ -545,14 +545,20 @@ func cmdMemWrite(ui *Ui, cmd cmd, args []string) (string, error) {
 }
 
 func cmdMemUnmap(ui *Ui, cmd cmd, args []string) (string, error) {
+	var ret string
 	for _, name := range args[1:] {
+		if name == "code" {
+			ret += "Code region may not be unmapped. Use dumpmem to save it to disk."
+			continue
+		}
+
 		err := ui.dbg.Unmap(name)
 		if err != nil {
 			return "", err
 		}
 	}
 
-	return "", nil
+	return ret, nil
 }
 
 
