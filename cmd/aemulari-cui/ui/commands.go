@@ -114,7 +114,7 @@ func matches(toMatch, s string) bool {
 // Keep this sorted in the order of preferred completion and help display order
 var cmdList []cmd = []cmd{
 	{
-		names:        []string{"continue", "run"},
+		names:        []string{"continue"},
 		min:          1,
 		max:          1,
 		exec:         cmdContinue,
@@ -245,7 +245,7 @@ var cmdList []cmd = []cmd{
 	},
 
 	{
-		names:		[]string{"dumpmem", "savemem"},
+		names:		[]string{"dumpmem"},
 		min:		3,
 		max:		4,
 		exec:		cmdDumpMem,
@@ -259,7 +259,7 @@ var cmdList []cmd = []cmd{
 
 
 	{
-		names:       []string{"display", "show"},
+		names:       []string{"display"},
 		min:         2,
 		max:         3,
 		exec:        cmdDisplay,
@@ -274,7 +274,7 @@ var cmdList []cmd = []cmd{
 	},
 
 	{
-		names:           []string{"clear"},
+		names:           []string{"clear", "clr"},
 		min:             1,
 		max:             2,
 		exec:            cmdClear,
