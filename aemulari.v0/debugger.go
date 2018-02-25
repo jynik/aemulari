@@ -569,7 +569,7 @@ func (e *exceptionInfo) cb(mu uc.Unicorn, intno uint32) {
 // Disassemble `count` instructions, starting at the current program counter
 func (d *Debugger) Disassemble(count uint64) ([]Disassembly, error) {
 	if rv, err := d.ReadRegByName("pc"); err != nil {
-		return []Disassembly{}, nil
+		return []Disassembly{}, err
 	} else {
 		return d.DisassembleAt(rv.Value, count)
 	}
@@ -577,27 +577,36 @@ func (d *Debugger) Disassemble(count uint64) ([]Disassembly, error) {
 
 // Disassemble `count` instructions, starting at the address specified by `addr`.
 func (d *Debugger) DisassembleAt(addr uint64, count uint64) ([]Disassembly, error) {
+	var code []byte
 	var ret []Disassembly
+	var err error
 
-	len := count * uint64(d.arch.maxInstructionSize())
-
-	if code, err := d.ReadMem(addr, len); err != nil {
-		return ret, nil
-	} else {
-		instrs, err := d.cs.Dis(code, addr, count)
-		if err != nil {
-			return ret, err
+	// If we run outside the bounds of mapped region, keep reducing the
+	// data length until we succeed
+	for len := count * uint64(d.arch.maxInstructionSize()); len > 0; len-- {
+		code, err = d.ReadMem(addr, len)
+		if err == nil {
+			break
 		}
+	}
 
-		for _, instr := range instrs {
-			var entry Disassembly
-			entry.AddressU64 = instr.Addr()
-			entry.Address = fmt.Sprintf("%08x", instr.Addr())
-			entry.Opcode = hex.EncodeToString(instr.Bytes())
-			entry.Mnemonic = instr.Mnemonic()
-			entry.Operands = instr.OpStr()
-			ret = append(ret, entry)
-		}
+	if err != nil {
+		return []Disassembly{}, err
+	}
+
+	instrs, err := d.cs.Dis(code, addr, count)
+	if err != nil {
+		return ret, err
+	}
+
+	for _, instr := range instrs {
+		var entry Disassembly
+		entry.AddressU64 = instr.Addr()
+		entry.Address = fmt.Sprintf("%08x", instr.Addr())
+		entry.Opcode = hex.EncodeToString(instr.Bytes())
+		entry.Mnemonic = instr.Mnemonic()
+		entry.Operands = instr.OpStr()
+		ret = append(ret, entry)
 	}
 
 	return ret, nil
