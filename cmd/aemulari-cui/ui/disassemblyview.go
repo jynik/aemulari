@@ -59,6 +59,7 @@ func (ui Ui) getPcSymbolAt(addr uint64) string {
 func (ui Ui) getLineAnnotations(addr uint64) string {
 	annotations := ui.getBpSymbolAt(addr)
 	annotations += ui.getPcSymbolAt(addr)
+	annotations += " "
 	return annotations
 }
 

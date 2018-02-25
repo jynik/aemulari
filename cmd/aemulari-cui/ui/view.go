@@ -48,12 +48,12 @@ type Views map[string]View
 type ViewUpdateCb func(view *gocui.View) error
 
 // View names
-const vDisasm = "{ Disassembly }"
-const vReg = "{ Registers }"
-const vFlags = "{ Flags } "
-const vMem = "{ Memory }"
-const vConsole = "{ Console }"
-const vCommands = "{ Commands }"
+const vDisasm = " Disassembly "
+const vReg = " Registers "
+const vFlags = " Flags "
+const vMem = "Memory "
+const vConsole = " Console "
+const vCommands = " Commands "
 
 /* Set in View.width and View.height  to indicate the view should fill the
  * remaining width or height of the GUI region. */
