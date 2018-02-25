@@ -33,7 +33,7 @@ TODO
 
 TODO: Links to documentation and wiki
 
-# Known Bugs
+# Known Issues
 
-* aemulari and aemulari-gui hang if the emulated program enters an infinite loop.
-  * In this situation, execution is "stuck" in Unicorn's codebase. Perhaps we could better leverage its timeout or implement a "continue" as a series of instruction-limited executions, with opportunities for the user to interrupt and break out.
+A number of known isses are presented [here](KNOWN_ISSUES.md). 
+Check this first if you run into problems.
