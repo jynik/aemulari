@@ -12,7 +12,7 @@ type DefaultTheme struct {
 
 const differsColor = immediateColor
 const errorColor = 9
-const addrColor = 30
+const addrColor = 24
 const opcodeColor = 242
 const mnemonicColor = 255
 const registerColor = 80
