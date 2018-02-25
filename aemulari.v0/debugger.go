@@ -450,6 +450,26 @@ func (d *Debugger) WriteMem(addr uint64, data []byte) error {
 	return d.mu.MemWrite(addr, data)
 }
 
+// Dump the contents of a range of memory to a file
+func (d *Debugger) DumpMem(filename string, addr, size uint64) error {
+	data, err := d.ReadMem(addr, size)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(filename, data, 0660)
+}
+
+// Dump the contents of an entire memory mapped region to a file
+func (d *Debugger) DumpMemRegion(filename, regionName string) error {
+	region, err := d.mapped.Get(regionName)
+	if err != nil {
+		return err
+	}
+
+	return d.DumpMem(filename, region.base, region.size)
+}
+
 // Execute `count` instructions and then return.
 // A negative count implies "Run until a breakpoint or exception"
 // Returns (hitException, intNumber, err)

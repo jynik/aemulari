@@ -213,9 +213,10 @@ var cmdList []cmd = []cmd{
 
 	{
 		names: []string{"map"},
-		exec:  cmdMemMap,
 		min:		2,
 		max:		7,
+		exec:  cmdMemMap,
+		mayTaintMem: true,
 		summary: "Map and configure a memory region.",
 		details: "<name>:<addr>:<size>:[permissions]:[input file]:[output_file]\n" +
 			"\n" +
@@ -233,6 +234,7 @@ var cmdList []cmd = []cmd{
 		exec:  cmdMemUnmap,
 		min:		2,
 		max:		4096,  // Arbitrary "good enough" value
+		mayTaintMem: true,
 		summary: "Unmap a memory region",
 		details: "<name> [name] ... [name]\n" +
 			"\n" +
@@ -243,11 +245,25 @@ var cmdList []cmd = []cmd{
 	},
 
 	{
+		names:		[]string{"dumpmem", "savemem"},
+		min:		3,
+		max:		4,
+		exec:		cmdDumpMem,
+		summary:	"Save the contents of a memory region to a file",
+		details:	"<filename> <region name>\n" +
+			"               <filename> <addr> <length>\n" +
+			"\n" +
+			"Save the contents of a memory region, specified by name or\n" +
+			"by address and length, to a file.",
+	},
+
+
+	{
 		names:       []string{"display", "show"},
 		min:         2,
 		max:         3,
 		exec:        cmdDisplay,
-		mayTaintMem: true,
+		mayTaintMem: true, // Not really taint, but we need to force redraw of Memory window
 		summary: "Display information about the specified item(s)",
 		details: "<item> [per-item args]\nShow or display the specified <item>.\n" +
 			"\n" +
@@ -475,6 +491,41 @@ func cmdDisplay(ui *Ui, cmd cmd, args []string) (string, error) {
 	}
 
 	return "", fmt.Errorf("\"%s\" is not a valid item.", args[1])
+}
+
+func cmdDumpMem(ui *Ui, cmd cmd, args []string) (string, error) {
+	var addr, size uint64
+	var name, filename string
+	var err error
+
+	filename = args[1]
+
+	if len(args) == 3 {
+		name = args[2]
+		err = ui.dbg.DumpMemRegion(filename, name)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Wrote contents of \"%s\" region to %s\n", name, filename), nil
+
+	}
+
+	addr, err = strconv.ParseUint(args[2], 0, 64)
+	if err != nil {
+		return "", fmt.Errorf("Invalid address (%s)", args[2])
+	}
+
+	size, err = strconv.ParseUint(args[3], 0, 64)
+	if err != nil {
+		return "", fmt.Errorf("Invalid size (%s)", args[3])
+	}
+
+	err = ui.dbg.DumpMem(filename, addr, size)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("Wrote contents of [0x%08x - 0x%08x] to %s\n", addr, addr+size-1, filename), nil
 }
 
 func cmdHelp(ui *Ui, cmd cmd, args []string) (string, error) {

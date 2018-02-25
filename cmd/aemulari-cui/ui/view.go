@@ -51,7 +51,7 @@ type ViewUpdateCb func(view *gocui.View) error
 const vDisasm = " Disassembly "
 const vReg = " Registers "
 const vFlags = " Flags "
-const vMem = "Memory "
+const vMem = " Memory "
 const vConsole = " Console "
 const vCommands = " Commands "
 
