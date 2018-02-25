@@ -54,7 +54,7 @@ func (r MemRegion) String() string {
 	perm := r.perms.String()
 	end := r.base + r.size - 1
 
-	ret := fmt.Sprintf("%s [0x%08x-0x%08x] {%s} in:\"%s\" out:\"%s\"",
+	ret := fmt.Sprintf("%-12s [0x%08x-0x%08x] {%3s}  in:\"%s\"  out:\"%s\"",
 		r.name, r.base, end, perm, r.inputFile, r.outputFile)
 
 	return ret

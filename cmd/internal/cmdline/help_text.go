@@ -24,6 +24,7 @@ const Details_mem = "" +
 	"      an optional field, all preceding optional fields must be specified well.\n" +
 	"  - The [perms] field specifies the access permissions of a region using the\n" +
 	"      characters 'r', 'w', and 'x' for read, write, and execute, respectively.\n" +
+	"	   If not specified, a default of \"rwx\" is used.\n" +
 	"  - If specified, the contents of [input file] will be loaded into the region.\n" +
 	"  - If specified, a memory region's contents will be written to [output file].\n"
 

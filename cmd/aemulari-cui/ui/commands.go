@@ -11,6 +11,9 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
+const linesep = "" +
+"-------------------------------------------------------------------------------\n"
+
 type cmd struct {
 	names   []string
 	min     int
@@ -57,9 +60,14 @@ func (ui *Ui) handleCommand(line string) (string, bool, error) {
 
 	nargs := len(args)
 	if nargs < cmd.min {
-		return "", true,
-			fmt.Errorf("%s: Too few arguments. At least %d are required.",
-				cmd.matchedName, cmd.min)
+		if cmd.min == 1 {
+			err = fmt.Errorf("%s: Required argument is missing.",
+					cmd.matchedName)
+		} else {
+			err = fmt.Errorf("%s: Too few arguments. At least %d are required.",
+					cmd.matchedName, cmd.min - 1)
+		}
+		return "", true, err
 	} else if nargs > cmd.max {
 		return "", true,
 			fmt.Errorf("%s: Too many arguments. The max is %d.",
@@ -128,7 +136,7 @@ var cmdList []cmd = []cmd{
 		summary:	  "Execute 1 or more instructions",
 		details:      "[count]\n" +
 		"\n" +
-		"Execute a single or [count] instructions.",
+		"Execute a single or [count] instructions.\n",
 	},
 
 	{
@@ -139,7 +147,7 @@ var cmdList []cmd = []cmd{
 		summary: "Set a breakpoint",
 		details: "[address]\n" +
 			"\n" +
-			"Set a breakpoint at PC or [address], if specified.",
+			"Set a breakpoint at PC or [address], if specified.\n",
 	},
 
 	{
@@ -203,19 +211,50 @@ var cmdList []cmd = []cmd{
 			" mw 0x1ab000 {deadbeef} 0xbadc0de\n",
 	},
 
-	// Show the current status of various items
 	{
-		names:       []string{"show"},
+		names: []string{"map"},
+		exec:  cmdMemMap,
+		min:		2,
+		max:		7,
+		summary: "Map and configure a memory region.",
+		details: "<name>:<addr>:<size>:[permissions]:[input file]:[output_file]\n" +
+			"\n" +
+			"This command is identical to the -m/--mem <region> command line option,\n" +
+			"and may be used to map, configure, and initialize a memory region.\n" +
+			"However, in this UI, a space may be used instead of the ':' separator.\n" +
+			"\n" +
+			"If [output_file] is specified, the memory contents will be written\n" +
+			"when the region is unmapped - either manually or when the debugger\n" +
+			"is closed.\n",
+	},
+
+	{
+		names: []string{"unmap"},
+		exec:  cmdMemMap,
+		min:		2,
+		max:		4096,  // Arbitrary "good enough" value
+		summary: "Unmap a memory region",
+		details: "<name> [name] ... [name]\n" +
+			"\n" +
+			"Unmap one or more memory regions, by name.\n" +
+			"\n" +
+			"If a region was configured with an output file, the asscioted memory\n" +
+			"will be written to this file before unmapping the region.\n",
+	},
+
+	{
+		names:       []string{"display", "show"},
 		min:         2,
 		max:         3,
-		exec:        cmdShow,
+		exec:        cmdDisplay,
 		mayTaintMem: true,
 		summary: "Display information about the specified item(s)",
 		details: "<item> [per-item args]\nShow or display the specified <item>.\n" +
 			"\n" +
 			"Available items:\n" +
 			"	breakpoints" +
-			"	memory <address>",
+			"	memory <address>" +
+			"	mapped [name]\n",
 	},
 
 	{
@@ -369,6 +408,75 @@ func cmdDelete(ui *Ui, cmd cmd, args []string) (string, error) {
 	}
 }
 
+func cmdDisplay(ui *Ui, cmd cmd, args []string) (string, error) {
+	var ret string
+	what := lowerTrim(args[1])
+
+	if strings.HasPrefix("breakpoints", what) {
+		bps := ui.dbg.GetBreakpoints()
+
+		ret += "\nBreakpoints\n"
+		ret += linesep
+
+		for _, bp := range bps {
+			ret += bp.String() + "\n"
+		}
+		return ret, nil
+
+	} else if strings.HasPrefix("mapped", what) {
+		ret += "\nMemory Mapped Regions\n"
+		ret += linesep
+
+		regions := ui.dbg.Mapped()
+		for _, region := range regions {
+			var haveMatch bool
+			if len(args) > 2 {
+				for _, name := range args[2:] {
+					haveMatch = name == region.Name()
+					if haveMatch {
+						break
+					}
+				}
+			} else {
+				haveMatch = true
+			}
+
+			if haveMatch {
+				ret += region.String() + "\n"
+			}
+		}
+		return ret, nil
+
+	} else if strings.HasPrefix("memory", what) {
+		if len(args) < 3 {
+			return "", fmt.Errorf("A required <address> argument was not provided.")
+		}
+
+		newAddr, err := strconv.ParseUint(args[2], 0, 64)
+		if err != nil {
+			return "", fmt.Errorf("\"%s\" is not a valid memory address.", args[2])
+		}
+
+		if view, err := ui.g.View(vMem); err != nil {
+			return "", err
+		} else {
+			ui.mem.addr = newAddr
+			ui.mem.pdata = []byte{}
+
+			// FIXME This shouldn't require a double-kick to prevent it from
+			//		 incorrectly highlighting changes when we point the view at
+			//		 a different memory location
+			ui.updateMemView(view)
+			ui.mem.pdata = []byte{}
+
+			return "", ui.updateMemView(view)
+		}
+		return "", nil
+	}
+
+	return "", fmt.Errorf("\"%s\" is not a valid item.", args[1])
+}
+
 func cmdHelp(ui *Ui, cmd cmd, args []string) (string, error) {
 
 	if len(args) < 2 {
@@ -382,6 +490,7 @@ func cmdHelp(ui *Ui, cmd cmd, args []string) (string, error) {
 
 		helpText += "\n"
 		helpText += "Notes:\n"
+		helpText += " - Cycle through command history using the up and down keys.\n"
 		helpText += " - Entering an empty command will run the previous command.\n"
 		helpText += "     This is useful when stepping through a program.\n"
 		helpText += " - Only a subset of command names is actually required.\n"
@@ -398,31 +507,16 @@ func cmdHelp(ui *Ui, cmd cmd, args []string) (string, error) {
 	}
 }
 
-func cmdStep(ui *Ui, cmd cmd, args []string) (string, error) {
-	var err error
-	var count int64 = 1
 
-	if len(args) > 1 {
-		count, err = strconv.ParseInt(args[1], 0, 64)
-		if err != nil || count <= 0 {
-			return "", fmt.Errorf("\"%s\" is not a valid step size.", args[1])
-		}
-	}
+func cmdMemMap(ui *Ui, cmd cmd, args []string) (string, error) {
+	regionStr := strings.Join(args[1:], ":")
 
-	exception, err := ui.dbg.Step(count)
+	region, err := ae.NewMemRegion(regionStr)
 	if err != nil {
 		return "", err
 	}
 
-	if exception.Occurred() {
-		return "Halted due to exception: " + exception.String(), nil
-	}
-
-	if count == 1 {
-		return fmt.Sprintf("Stepped 1 instruction."), nil
-	} else {
-		return fmt.Sprintf("Stepped %d instructions.", count), nil
-	}
+	return "", ui.dbg.Map(region)
 }
 
 func cmdMemWrite(ui *Ui, cmd cmd, args []string) (string, error) {
@@ -450,52 +544,22 @@ func cmdMemWrite(ui *Ui, cmd cmd, args []string) (string, error) {
 	return "", ui.dbg.WriteMem(addr, data[0:])
 }
 
-func cmdQuit(ui *Ui, cmd cmd, args []string) (string, error) {
-	ui.quit = true
+func cmdMemUnmap(ui *Ui, cmd cmd, args []string) (string, error) {
+	for _, name := range args[1:] {
+		err := ui.dbg.Unmap(name)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	return "", nil
 }
 
-func cmdShow(ui *Ui, cmd cmd, args []string) (string, error) {
-	what := lowerTrim(args[1])
 
-	if strings.HasPrefix("breakpoints", what) {
-		var ret string
-		bps := ui.dbg.GetBreakpoints()
-		for _, bp := range bps {
-			ret += bp.String() + "\n"
-		}
-		return ret, nil
-	} else if strings.HasPrefix("mappings", what) {
 
-	} else if strings.HasPrefix("memory", what) {
-		if len(args) < 3 {
-			return "", fmt.Errorf("A required <address> argument was not provided.")
-		}
-
-		newAddr, err := strconv.ParseUint(args[2], 0, 64)
-		if err != nil {
-			return "", fmt.Errorf("\"%s\" is not a valid memory address.", args[2])
-		}
-
-		if view, err := ui.g.View(vMem); err != nil {
-			return "", err
-		} else {
-			ui.mem.addr = newAddr
-			ui.mem.pdata = []byte{}
-
-			// FIXME This shouldn't require a double-kick to prevent it from
-			//		 incorrectly highlighting changes when we point the view at
-			//		 a differnt memory location
-			ui.updateMemView(view)
-			ui.mem.pdata = []byte{}
-
-			return "", ui.updateMemView(view)
-		}
-
-		return "", nil
-	}
-
-	return "", fmt.Errorf("\"%s\" is not a valid item.", args[1])
+func cmdQuit(ui *Ui, cmd cmd, args []string) (string, error) {
+	ui.quit = true
+	return "", nil
 }
 
 func cmdRegWrite(ui *Ui, cmd cmd, args []string) (string, error) {
@@ -530,4 +594,31 @@ func cmdRegWrite(ui *Ui, cmd cmd, args []string) (string, error) {
 
 func cmdReset(ui *Ui, cmd cmd, args []string) (string, error) {
 	return "", ui.dbg.Reset(true)
+}
+
+func cmdStep(ui *Ui, cmd cmd, args []string) (string, error) {
+	var err error
+	var count int64 = 1
+
+	if len(args) > 1 {
+		count, err = strconv.ParseInt(args[1], 0, 64)
+		if err != nil || count <= 0 {
+			return "", fmt.Errorf("\"%s\" is not a valid step size.", args[1])
+		}
+	}
+
+	exception, err := ui.dbg.Step(count)
+	if err != nil {
+		return "", err
+	}
+
+	if exception.Occurred() {
+		return "Halted due to exception: " + exception.String(), nil
+	}
+
+	if count == 1 {
+		return fmt.Sprintf("Stepped 1 instruction."), nil
+	} else {
+		return fmt.Sprintf("Stepped %d instructions.", count), nil
+	}
 }
