@@ -16,8 +16,12 @@ where I presented it at [BSidesROC].
 I originally intended to keep working on it to release something more
 featureful, but alas, how time flies. I never got around to it.
 
-If you're interested in takign this further, reach out before forking I
-may be interested in picking this back up, as I use it from time to time.
+If you're interested in taking this further, please reach out before forking.
+I may be interested in picking this back up to actively maintain, as I use it
+from time to time. Personally, I'd say efforts are better spent investing 
+in something based upon [usercorn]. :)
+
+[usercorn]: https://github.com/lunixbochs/usercorn
 
 # Dependencies
 
