@@ -107,16 +107,11 @@ Notes:
      prefixed with "0x" (e.g., 0x1b4d1d3a).
  - Available GUI commands can be viewed by running the "help" command.
 
-Examples:
+Example:
   Run myprogram.bin with memory at 0x48000 initialized with the contents
   of a mydata.bin file.
     aemulari -m code:0x10000:0x1000:rx:./myprogram.bin \
       -m mydata:0x48000:0x200:rwx:./mydata.bin
-
-  Execute myprogram.bin with the breakpoints set. Note that 
-  breakpoints can also be set from within the GUI.
-    aemulari -m code:0x48000000:0x4000:rx:./myprogram.bin \
-      -m mydata:0x80000000:0x4000:rw::./mydata.bin
 ~~~
 
 # Known Issues
