@@ -4,7 +4,10 @@
 using [Capstone], [capstr], and [gocui]. I wrote it to help me think through
 32-bit ARM bare-metal code that I was otherwise reverse engineering statically.
 
-For whatever reason, QEMU and GEF just wasn't doing it for me.
+![aemulari CUI screenshot](./doc/images/cui.png)
+
+Why this tool? For whatever reason, QEMU and GEF just wasn't doing it for me,
+so I built the tool I wanted.
 
 At the moment, you should consider this an open source project that's 
 pretty much entirely inactive, as I haven't really touched it much since 2018,
@@ -13,8 +16,8 @@ where I presented it at [BSidesROC].
 I originally intended to keep working on it to release something more
 featureful, but alas, how time flies. I never got around to it.
 
-Before you fork it, reach out. I may be interested in picking this back
-up as I use it from time to time.
+If you're interested in takign this further, reach out before forking I
+may be interested in picking this back up, as I use it from time to time.
 
 # Dependencies
 
