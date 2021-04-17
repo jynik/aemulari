@@ -21,7 +21,7 @@ endif
 all: $(BIN)
 
 %.arm.o: %.arm.S $(HDR)
-	$(AS) $(ASFLAGS) -c $< -o $@
+	$(AS) -march=armv7-a $(ASFLAGS) -c $< -o $@
 
 %.thumb.o: %.thumb.S $(HDR)
 	$(AS) -mthumb -mcpu=Cortex-M4 $(ASFLAGS) -c $< -o $@
