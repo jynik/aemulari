@@ -1,4 +1,4 @@
-package main
+package aemulari
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ import (
 // locations.
 //
 // gdbghidra: https://github.com/Comsecuris/gdbghidra
-type GhidraBridge struct {
+type ghidraBridge struct {
 
 	ghidraConn net.Conn	// Commands we send to the Ghidra plugin
 	isConnected bool	// Is ghidraConn an active connection?
@@ -25,11 +25,11 @@ type GhidraBridge struct {
 									 * any open connection. */
 }
 
-// Connect to GhidraBridge and start up listening service for
+// Connect to ghidraBridge and start up listening service for
 // events originating from Ghidra. The default ports for the plugin
 // are used, and 127.0.0.1 is assumed.
-func (gb *GhidraBridge) Connect() error {
-	var localAddr net.TCPAddr
+func (gb *ghidraBridge) Connect() error {
+	//var localAddr net.TCPAddr
 	var err error
 
 	if gb.isConnected {
@@ -42,8 +42,8 @@ func (gb *GhidraBridge) Connect() error {
 	}
 	gb.isConnected = true
 
-	localAddr.IP = net.IPv4(127, 0, 0, 1)
-	localAddr.Port = 2306
+	//localAddr.IP = net.IPv4(127, 0, 0, 1)
+	//localAddr.Port = 2306
 
 	//gb.eventListener, err = net.ListenTCP("tcp", &localAddr)
 	//if err != nil {
@@ -56,7 +56,7 @@ func (gb *GhidraBridge) Connect() error {
 	return nil
 }
 
-func (gb *GhidraBridge) SetCursorAddress(addr uint64) error {
+func (gb *ghidraBridge) SetCursorAddress(addr uint64) error {
 	if !gb.isConnected {
 		return nil
 	}
@@ -64,6 +64,7 @@ func (gb *GhidraBridge) SetCursorAddress(addr uint64) error {
 	if msg, err := updateCursorMessage(addr); err != nil {
 		return err
 	} else {
+		msg = append(msg, '\n')
 		_, err = gb.ghidraConn.Write(msg)
 		return err
 	}
@@ -71,7 +72,7 @@ func (gb *GhidraBridge) SetCursorAddress(addr uint64) error {
 	return nil
 }
 
-func (gb *GhidraBridge) Disconnect() {
+func (gb *ghidraBridge) Disconnect() {
 	if gb.isListening {
 		gb.shutdownListener <- true
 		close(gb.shutdownListener)
@@ -83,7 +84,7 @@ func (gb *GhidraBridge) Disconnect() {
 	}
 }
 
-//func (gb *GhidraBridge) listenerLoop() {
+//func (gb *ghidraBridge) listenerLoop() {
 //	shutdown := false
 //
 //	fmt.Println("Starting listernaerloop")
@@ -113,7 +114,7 @@ func (gb *GhidraBridge) Disconnect() {
 //	gb.isListening = false
 //}
 //
-//func (gb *GhidraBridge) eventHandler(conn net.Conn) bool {
+//func (gb *ghidraBridge) eventHandler(conn net.Conn) bool {
 //	return false
 //}
 
@@ -165,17 +166,17 @@ func updateCursorMessage(address uint64) ([]byte, error) {
 	return encodeBridgeMessage("CURSOR", fields)
 }
 
-func main() {
-	var gb GhidraBridge
-
-	err := gb.Connect()
-	if err != nil {
-		panic(err)
-	}
-
-	err = gb.SetCursorAddress(0x1924)
-	if err != nil {
-		panic(err)
-	}
-	gb.Disconnect()
-}
+//func main() {
+//	var gb ghidraBridge
+//
+//	err := gb.Connect()
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	err = gb.SetCursorAddress(0x1924)
+//	if err != nil {
+//		panic(err)
+//	}
+//	gb.Disconnect()
+//}
