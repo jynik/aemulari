@@ -60,12 +60,12 @@ func Parse(flags SupportedFlags, usage string) (ArgMap, *ae.Architecture, *ae.De
 	args.remove("arch")
 
 	// Parse user-provided initial register values for the configured architecture
-	dbgCfg.Regs, err = arch.ParseRegisters(args.GetStrings("regs"))
+	dbgCfg.Regs, err = arch.ParseRegisters(args.GetStrings("reg"))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	args.remove("regs")
+	args.remove("reg")
 
 	// Create the debugger and set any initial breakpoints
 	dbg, err := ae.NewDebugger(arch, dbgCfg)
