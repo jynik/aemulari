@@ -668,9 +668,5 @@ func cmdStep(ui *Ui, cmd cmd, args []string) (string, error) {
 		return "Halted due to exception: " + exception.String(), nil
 	}
 
-	if count == 1 {
-		return fmt.Sprintf("Stepped 1 instruction."), nil
-	} else {
-		return fmt.Sprintf("Stepped %d instructions.", count), nil
-	}
+	return "", nil
 }
