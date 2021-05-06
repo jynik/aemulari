@@ -60,8 +60,12 @@ func (rm *registerMap) ParseRegister(s string) (Register, error) {
 	}
 
 	attr, err := rm.register(fields[0])
-	reg.Value = reg.attr.mask & val
+	if err != nil {
+		return reg, err
+	}
+
 	reg.attr = attr
+	reg.Value = reg.attr.mask & val
 	return reg, err
 }
 
