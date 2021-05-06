@@ -11,6 +11,8 @@ AEMULARI_CUI_SRC := $(wildcard cmd/aemulari-cui/*.go) \
 
 BIN  := bin/aemulari bin/aemulari-cui
 
+INSTALL_PATH ?= /usr/local/bin
+
 all: bin/aemulari bin/aemulari-cui
 
 bin:
@@ -34,6 +36,10 @@ bin/aemulari-cui: $(AEMULARI_CUI_SRC) $(DEPS) bin
 .deps/gocui: .deps
 	$(GO) get -u github.com/jroimartin/gocui && touch $@
 
+install:
+	cp -p bin/aemulari $(INSTALL_PATH)/
+	cp -p bin/aemulari-cui $(INSTALL_PATH)/
+
 test-asm:
 	$(MAKE) -C test-asm
 
@@ -44,4 +50,4 @@ clean:
 realclean: clean
 	rm -rf .deps
 
-.PHONY: clean test-asm
+.PHONY: clean test-asm install
