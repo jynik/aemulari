@@ -42,7 +42,7 @@ func (r *Register) String() string {
 
 // Lookup a register's flag by name
 func (r *Register) getFlagByName(name string) (*registerFlag, error) {
-	targetFlag := strings.TrimSpace(strings.ToLower(name))
+	targetFlag := strings.TrimSpace(name)
 
 	for _, f := range r.attr.flags {
 		if f.name == targetFlag {
