@@ -49,3 +49,10 @@ var Flag_hexdump *Flag = &Flag{
 	Occurrence: Multiple,
 	ValueReqt:  Required,
 }
+
+var Flag_ghidra *Flag = &Flag{
+	Short:		"-G",
+	Long:		"--ghidra",
+	Occurrence: Once,
+	ValueReqt:	None,
+}

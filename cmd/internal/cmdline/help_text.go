@@ -46,6 +46,10 @@ const FlagStr_printHexdump = "" +
 const FlagStr_help = "" +
 	"  -h, --help                  Show this text and exit.\n"
 
+const FlagStr_ghidra = "" +
+	"  -G, --ghidra                Synchronize Ghidra cursor selection to PC\n" +
+	"                              via gdbghidra plugin listening on port 2305.\n"
+
 const Notes = "" +
 	"\nNotes:\n" +
 	" - Numeric parameters may be specified in decimal format or in hex format,\n" +

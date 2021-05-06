@@ -67,6 +67,8 @@ func Parse(flags SupportedFlags, usage string) (ArgMap, *ae.Architecture, *ae.De
 	}
 	args.remove("reg")
 
+	dbgCfg.UseGhidra = args.Contains("ghidra")
+
 	// Create the debugger and set any initial breakpoints
 	dbg, err := ae.NewDebugger(arch, dbgCfg)
 	if err != nil {

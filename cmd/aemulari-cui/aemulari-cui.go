@@ -19,6 +19,7 @@ var usageText string = "" +
 	cmdline.FlagStr_regs +
 	cmdline.FlagStr_mem +
 	cmdline.FlagStr_breakpoint +
+	cmdline.FlagStr_ghidra +
 	cmdline.FlagStr_help +
 	cmdline.Details_arch +
 	cmdline.Details_mem +
@@ -46,6 +47,7 @@ func main() {
 		cmdline.Flag_breakpoint,
 		cmdline.Flag_printRegs,
 		cmdline.Flag_hexdump,
+		cmdline.Flag_ghidra,
 	}
 
 	_, arch, dbg := cmdline.Parse(supportedFlags, usageText)
