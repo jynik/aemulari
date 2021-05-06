@@ -15,7 +15,6 @@ import (
 type Debugger struct {
 	arch   Architecture   // Access to architecture attributes
 	mu     uc.Unicorn     // Unicorn emulator handle
-	cs     *cs.Engine     // Capstone disassembly engine handle
 	cfg    DebuggerConfig // Configuration settings
 	mapped MemRegionSet   // Mapped memory regions
 	step   codeStep       // Code stepping metadata
@@ -90,7 +89,6 @@ func NewDebugger(a Architecture, c DebuggerConfig) (*Debugger, error) {
 func (d *Debugger) Reset(keepMappings bool) error {
 	var err, firstError error
 	d.mu.Close()
-	d.cs.Close()
 
 	// Reset to original configuration, but keep memory mappings
 	// This is intended to allow us to map regions as we discover they're
@@ -132,17 +130,6 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 
 	d.mu, err = uc.NewUnicorn(d.arch.id().uc, d.arch.initialMode().uc)
 	if err != nil {
-		return err
-	}
-
-	d.cs, err = cs.New(d.arch.id().cs, d.arch.initialMode().cs)
-	if err != nil {
-		d.mu.Close()
-		return err
-	}
-
-	if err = d.cs.Option(cs.OPT_TYPE_SKIPDATA, cs.OPT_ON); err != nil {
-		d.mu.Close()
 		return err
 	}
 
@@ -224,7 +211,6 @@ func (d *Debugger) Close() error {
 
 func (d *Debugger) closeAll(e error) error {
 	d.mu.Close()
-	d.cs.Close()
 	return e
 }
 
@@ -580,6 +566,8 @@ func (d *Debugger) DisassembleAt(addr uint64, count uint64) ([]Disassembly, erro
 	var code []byte
 	var ret []Disassembly
 	var err error
+	var disasm *cs.Engine // Capstone disassembly engine (via capstr)
+	var regs []Register
 
 	// If we run outside the bounds of mapped region, keep reducing the
 	// data length until we succeed
@@ -590,12 +578,28 @@ func (d *Debugger) DisassembleAt(addr uint64, count uint64) ([]Disassembly, erro
 		}
 	}
 
+	regs, err =  d.ReadRegAll()
 	if err != nil {
-		return []Disassembly{}, err
+		return ret, err
 	}
 
-	instrs, err := d.cs.Dis(code, addr, count)
+	// TODO: Don't create (and destory) a new disassembly engine every time
+	//		 we're called. Push this into the Architecture to provide us the handle.
+	//		 Under the hood we can create disassembler for each valid mode and return
+	//		 the one pertaining to the current mode.
+	disasm, err = cs.New(d.arch.id().cs, d.arch.currentMode(regs).cs)
 	if err != nil {
+		return ret, err
+	}
+
+	if err = disasm.Option(cs.OPT_TYPE_SKIPDATA, cs.OPT_ON); err != nil {
+		disasm.Close()
+		return ret, err
+	}
+
+	instrs, err := disasm.Dis(code, addr, count)
+	if err != nil {
+		disasm.Close()
 		return ret, err
 	}
 
@@ -609,6 +613,7 @@ func (d *Debugger) DisassembleAt(addr uint64, count uint64) ([]Disassembly, erro
 		ret = append(ret, entry)
 	}
 
+	disasm.Close()
 	return ret, nil
 }
 

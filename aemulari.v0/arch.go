@@ -30,6 +30,9 @@ type Architecture interface {
 	// Return the processor's initial mode
 	initialMode() processorMode
 
+	// Return the processor's current mode
+	currentMode(regs []Register) processorMode
+
 	// Adjust, if necessary (e.g., based upon mode or alignment), and return
 	// the initial PC value.
 	initialPC(pc uint64) uint64

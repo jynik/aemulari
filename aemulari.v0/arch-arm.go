@@ -359,7 +359,7 @@ func (a *archArm) endianness(regs []Register) Endianness {
 	panic("arm.Endianness() was not passed CPSR.")
 }
 
-func (a *archArm) currentMode(regs []Register) string {
+func (a *archArm) getTBit(regs []Register) bool {
 	for _, r := range regs {
 		if r.attr.name == "cpsr" {
 			value, err := r.getFlagValueByName("T")
@@ -367,24 +367,42 @@ func (a *archArm) currentMode(regs []Register) string {
 				panic("Bug: " + err.Error())
 			}
 
-			switch value {
-			case 0x0:
-				return "arm"
-			case 0x1:
-				return "thumb"
-			default:
+			if value < 0 || value > 1 {
 				panic(fmt.Sprintf("Buf: Illegal CPSR value: 0x%x", value))
 			}
+
+			return value == 1
 		}
 	}
 
 	panic("Bug: Provided register set was missing CPSR")
+
+}
+
+func (a *archArm) currentModeStr(regs []Register) string {
+	t_bit := a.getTBit(regs)
+
+	if t_bit {
+		return "thumb"
+	}
+	return ""
+}
+
+func (a *archArm) currentMode(regs []Register) processorMode {
+	t_bit := a.getTBit(regs)
+
+	if t_bit {
+		return processorMode{uc.MODE_THUMB, cs.MODE_THUMB}
+	}
+
+	return processorMode{uc.MODE_ARM, cs.MODE_ARM}
+
 }
 
 func (a *archArm) exception(intno uint32, regs []Register, instr []byte) Exception {
 	var e Exception
 
-	thumb := a.currentMode(regs) == "thumb"
+	thumb := a.currentModeStr(regs) == "thumb"
 	havePc := false
 
 	if (thumb && len(instr) < 2) || (!thumb && len(instr) < 4) {
