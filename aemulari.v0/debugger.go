@@ -468,6 +468,39 @@ func (d *Debugger) DumpMemRegion(filename, regionName string) error {
 	return d.DumpMem(filename, region.base, region.size)
 }
 
+func (d *Debugger) preEmulationOps(stepCount int64) (uint64, error) {
+	d.step.regs = []Register{}
+	d.step.count = stepCount
+	d.exInfo.last = Exception{}
+
+	pc, err := d.pc()
+	if err != nil {
+		return 0, err
+	}
+
+	return pc, nil
+}
+
+func (d *Debugger) postEmulationOps(mu_err error) (Exception, error) {
+	var err error = mu_err
+
+	// FIXME: Coming back to this code, I'm not so certain this makes sense
+	// Need to revisit the motivation here WRT mu.Stop() vs failure modes
+	write_err := d.WriteRegs(d.step.regs)
+	if write_err != nil && err == nil {
+		err = write_err
+	}
+
+	pc, pc_err := d.pc()
+	if pc_err != nil && err == nil {
+		err = pc_err
+	} else {
+		d.ghidra.SetCursorAddress(pc)
+	}
+
+	return d.exInfo.last, err
+}
+
 // Execute `count` instructions and then return.
 // A negative count implies "Run until a breakpoint or exception"
 // Returns (hitException, intNumber, err)
@@ -476,30 +509,13 @@ func (d *Debugger) Step(count int64) (Exception, error) {
 		return Exception{}, errors.New("Debugger.Step() requires that count >= 1.")
 	}
 
-	d.step.regs = []Register{}
-	d.step.count = count
-	d.exInfo.last = Exception{}
-
-	pc, err := d.pc()
+	pc, err := d.preEmulationOps(count)
 	if err != nil {
 		return d.exInfo.last, err
 	}
 
 	err = d.mu.StartWithOptions(pc, d.code().End(), &d.step.options)
-	if err != nil {
-		return d.exInfo.last, err
-	}
-
-	if err := d.WriteRegs(d.step.regs); err != nil {
-		return d.exInfo.last, err
-	}
-
-	// FIXME: Inefficient to read back, just iterate through d.step.regs
-	if pc, err = d.pc(); err != nil {
-		return d.exInfo.last, err
-	}
-	d.ghidra.SetCursorAddress(pc)
-	return d.exInfo.last, nil
+	return d.postEmulationOps(err)
 }
 
 // Start or continue execution in the debugger. Upon hitting a breakpoint
@@ -510,31 +526,13 @@ func (d *Debugger) Step(count int64) (Exception, error) {
 // Exception.String() method may be used to retrieve information about the
 // exception.
 func (d *Debugger) Continue() (Exception, error) {
-	d.step.regs = []Register{}
-	d.step.count = -1
-	d.exInfo.last = Exception{}
-
-	pc, err := d.pc()
+	pc, err := d.preEmulationOps(-1)
 	if err != nil {
 		return d.exInfo.last, err
 	}
 
 	err = d.mu.StartWithOptions(pc, d.code().End(), &d.step.options)
-	if err != nil {
-		return d.exInfo.last, err
-	}
-
-	if err = d.WriteRegs(d.step.regs); err != nil {
-		return d.exInfo.last, err
-	}
-
-	// FIXME: Inefficient to read back, just iterate through d.step.regs
-	if pc, err = d.pc(); err != nil {
-		return d.exInfo.last, err
-	}
-	d.ghidra.SetCursorAddress(pc)
-
-	return d.exInfo.last, nil
+	return d.postEmulationOps(err)
 }
 
 // Code step callback
