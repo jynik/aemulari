@@ -456,6 +456,38 @@ func (d *Debugger) DumpMemRegion(filename, regionName string) error {
 	return d.DumpMem(filename, region.base, region.size)
 }
 
+func (d *Debugger) run(stepCount int64) (Exception, error) {
+	d.step.regs = []Register{}
+	d.step.count = stepCount
+	d.exInfo.last = Exception{}
+
+	/* FIXME: Coming back to this code years later, I'm not so certain this
+	 * register writeback still makes sense. I feel like this was me hacking
+	 * around behavior not governed by an API promise.
+	 *
+	 * Need to revisit the motivation here WRT the state mu.Stop() leaves
+	 * the emulated state in for expected stopping points and errors
+	 */
+	writeback := (stepCount < 0)
+
+	pc, err := d.pc()
+	if err != nil {
+		return d.exInfo.last, err
+	}
+
+	err = d.mu.StartWithOptions(pc, d.code().End(), &d.step.options)
+
+	if writeback {
+		write_err := d.WriteRegs(d.step.regs)
+		if write_err != nil && err == nil {
+			err = write_err
+		}
+	}
+
+	return d.exInfo.last, err
+
+}
+
 // Execute `count` instructions and then return.
 // A negative count implies "Run until a breakpoint or exception"
 // Returns (hitException, intNumber, err)
@@ -464,21 +496,7 @@ func (d *Debugger) Step(count int64) (Exception, error) {
 		return Exception{}, errors.New("Debugger.Step() requires that count >= 1.")
 	}
 
-	d.step.regs = []Register{}
-	d.step.count = count
-	d.exInfo.last = Exception{}
-
-	pc, err := d.pc()
-	if err != nil {
-		return d.exInfo.last, err
-	}
-
-	err = d.mu.StartWithOptions(pc, d.code().End(), &d.step.options)
-	if err != nil {
-		return d.exInfo.last, err
-	}
-
-	return d.exInfo.last, d.WriteRegs(d.step.regs)
+	return d.run(count)
 }
 
 // Start or continue execution in the debugger. Upon hitting a breakpoint
@@ -489,21 +507,7 @@ func (d *Debugger) Step(count int64) (Exception, error) {
 // Exception.String() method may be used to retrieve information about the
 // exception.
 func (d *Debugger) Continue() (Exception, error) {
-	d.step.regs = []Register{}
-	d.step.count = -1
-	d.exInfo.last = Exception{}
-
-	pc, err := d.pc()
-	if err != nil {
-		return d.exInfo.last, err
-	}
-
-	err = d.mu.StartWithOptions(pc, d.code().End(), &d.step.options)
-	if err != nil {
-		return d.exInfo.last, err
-	}
-
-	return d.exInfo.last, d.WriteRegs(d.step.regs)
+	return d.run(-1)
 }
 
 // Code step callback
