@@ -20,12 +20,14 @@ type Debugger struct {
 	step   codeStep       // Code stepping metadata
 	bps    breakpointSet  // Breakpoint settings
 	exInfo exceptionInfo  // CPU Exception handling
+	ts     ToolSync       // External tool synchronization
 }
 
 // Configuration of Debugger's initial state
 type DebuggerConfig struct {
 	Regs []Register   // Default register values
 	Mem  MemRegionSet // Memory region configuration
+	EnToolSync bool	  // Enable use of external tool synchronization
 }
 
 // A single disassembled instruction separated into its components
@@ -149,10 +151,12 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 
 	// Load default register values
 	var loadedPc bool = false
+	var pcVal uint64
 	for _, r := range d.cfg.Regs {
 		if r.attr.pc {
 			loadedPc = true
 			r.Value = d.arch.initialPC(r.Value)
+			pcVal = r.Value
 		}
 
 		if err := d.mu.RegWrite(r.attr.uc, r.Value); err != nil {
@@ -169,11 +173,18 @@ func (d *Debugger) init(arch Architecture, cfg DebuggerConfig, reset bool) error
 		if err != nil {
 			return d.closeAll(err)
 		}
-		pcVal := d.arch.initialPC(codeMem.base)
+		pcVal = d.arch.initialPC(codeMem.base)
 
 		if err := d.mu.RegWrite(pc.uc, pcVal); err != nil {
 			return d.closeAll(err)
 		}
+	}
+
+	if d.cfg.EnToolSync {
+		if err = d.ts.Open(); err != nil {
+			return d.closeAll(err)
+		}
+		d.ts.SendCurrAddress(pcVal)
 	}
 
 	// Code stepping setup
@@ -211,6 +222,7 @@ func (d *Debugger) Close() error {
 
 func (d *Debugger) closeAll(e error) error {
 	d.mu.Close()
+	d.ts.Close()
 	return e
 }
 
@@ -457,6 +469,8 @@ func (d *Debugger) DumpMemRegion(filename, regionName string) error {
 }
 
 func (d *Debugger) run(stepCount int64) (Exception, error) {
+	var err error
+
 	d.step.regs = []Register{}
 	d.step.count = stepCount
 	d.exInfo.last = Exception{}
@@ -470,8 +484,8 @@ func (d *Debugger) run(stepCount int64) (Exception, error) {
 	 */
 	writeback := (stepCount < 0)
 
-	pc, err := d.pc()
-	if err != nil {
+	pc, pc_err := d.pc()
+	if pc_err != nil {
 		return d.exInfo.last, err
 	}
 
@@ -482,6 +496,16 @@ func (d *Debugger) run(stepCount int64) (Exception, error) {
 		if write_err != nil && err == nil {
 			err = write_err
 		}
+	}
+
+	// Let any externally sync'd tools know where PC is now.
+	pc, pc_err = d.pc()
+	if pc_err == nil {
+		pc_err = d.ts.SendCurrAddress(pc)
+	}
+
+	if pc_err != nil && err == nil {
+		err = pc_err
 	}
 
 	return d.exInfo.last, err
