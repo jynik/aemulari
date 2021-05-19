@@ -19,6 +19,7 @@ var usageText string = "" +
 	cmdline.FlagStr_regs +
 	cmdline.FlagStr_mem +
 	cmdline.FlagStr_breakpoint +
+	cmdline.FlagStr_sync +
 	cmdline.FlagStr_help +
 	cmdline.Details_arch +
 	cmdline.Details_mem +
@@ -44,6 +45,7 @@ func main() {
 		cmdline.Flag_mem,
 		cmdline.Flag_instrcount,
 		cmdline.Flag_breakpoint,
+		cmdline.Flag_sync,
 		cmdline.Flag_printRegs,
 		cmdline.Flag_hexdump,
 	}

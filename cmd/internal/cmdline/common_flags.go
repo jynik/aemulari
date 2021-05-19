@@ -49,3 +49,10 @@ var Flag_hexdump *Flag = &Flag{
 	Occurrence: Multiple,
 	ValueReqt:  Required,
 }
+
+var Flag_sync *Flag = &Flag{
+	Short:		"-S",
+	Long:		"--sync",
+	Occurrence:	Once,
+	ValueReqt:	None,
+}

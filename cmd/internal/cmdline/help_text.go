@@ -46,6 +46,10 @@ const FlagStr_printHexdump = "" +
 const FlagStr_help = "" +
 	"  -h, --help                  Show this text and exit.\n"
 
+const FlagStr_sync = "" +
+	"  -S, --sync                  Enable synchronization to external tools.\n" +
+	"                               (Currently sends PC addr to localhost:1080)\n"
+
 const Notes = "" +
 	"\nNotes:\n" +
 	" - Numeric parameters may be specified in decimal format or in hex format,\n" +
